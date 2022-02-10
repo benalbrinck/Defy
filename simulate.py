@@ -1,8 +1,7 @@
+import defy_logging
 import json
-import logging
 import numpy as np
 import tensorflow as tf
-from datetime import datetime
 from sportsreference.ncaab.conferences import Conference
 
 # Parameters
@@ -24,22 +23,6 @@ removed_players = [
 	'trevin-wade-1'
 ]
 # removed_players = []
-
-
-def start_logging():
-    logger = logging.getLogger('defy')
-    logger.setLevel(level=logging.DEBUG)
-
-    filename = (f'logs/{datetime.now()}.log').replace(':', '')
-    file_handler = logging.FileHandler(filename)
-    stream_handler = logging.StreamHandler()
-
-    format = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s')
-    file_handler.setFormatter(format)
-    stream_handler.setFormatter(format)
-
-    logger.addHandler(file_handler)
-    logger.addHandler(stream_handler)
 
 
 def get_conference_teams():
@@ -106,8 +89,7 @@ def simulate_round(teams):
 
 
 if __name__ == '__main__':
-	start_logging()
-	logger = logging.getLogger('defy')
+	logger = defy_logging.get_logger()
 
 	conference_names = open('conferences.txt').read().split('\n')
 

@@ -1,8 +1,7 @@
+import defy_logging
 import json
-import logging
 import os
 import numpy as np
-from datetime import datetime
 from sportsreference.ncaab.conferences import Conference
 from sportsreference.ncaab.teams import Teams
 from sportsreference.ncaab.schedule import Schedule
@@ -11,22 +10,6 @@ from time import sleep
 
 year = 2021
 end_year = 2016
-
-
-def start_logging():
-    logger = logging.getLogger('defy')
-    logger.setLevel(level=logging.DEBUG)
-
-    filename = (f'logs/{datetime.now()}.log').replace(':', '')
-    file_handler = logging.FileHandler(filename)
-    stream_handler = logging.StreamHandler()
-
-    format = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s')
-    file_handler.setFormatter(format)
-    stream_handler.setFormatter(format)
-
-    logger.addHandler(file_handler)
-    logger.addHandler(stream_handler)
 
 
 def get_conference_teams():
@@ -60,8 +43,7 @@ def get_teams():
 
 
 if __name__ == '__main__':
-    start_logging()
-    logger = logging.getLogger('defy')
+    logger = defy_logging.get_logger()
 
     # Network input and output variables
     inputs = []
