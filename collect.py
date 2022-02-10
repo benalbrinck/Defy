@@ -1,179 +1,209 @@
+import json
+import logging
+import os
 import numpy as np
+from datetime import datetime
 from sportsreference.ncaab.conferences import Conference
 from sportsreference.ncaab.teams import Teams
 from sportsreference.ncaab.schedule import Schedule
-from statistics import mean, stdev
 from time import sleep
 
-# Parameters
+
 year = 2021
 end_year = 2016
 
-use_conference_id = True
-use_n_players_stats = True
-use_players_summary = True
 
-n_players = 10
-roster_vars = ['assist_percentage', 'assists', 'block_percentage', 'blocks', 
-				'defensive_rebound_percentage', 'defensive_rebounds', 
-				'effective_field_goal_percentage', 'field_goal_attempts', 
-				'field_goal_percentage', 'field_goals', 'free_throw_attempt_rate', 
-				'free_throw_attempts', 'free_throw_percentage', 'free_throws', 
-				'minutes_played', 'offensive_rebound_percentage', 
-				'offensive_rebounds', 'personal_fouls', 'points', 'steal_percentage', 
-				'steals', 'three_point_attempt_rate', 'three_point_attempts', 
-				'three_point_percentage', 'three_pointers', 'total_rebounds', 
-				'true_shooting_percentage', 'turnover_percentage', 'turnovers', 
-				'two_point_attempts', 'two_point_percentage', 'two_pointers', 
-				'usage_percentage']
+def start_logging():
+    logger = logging.getLogger('defy')
+    logger.setLevel(level=logging.DEBUG)
 
-# Network input and output variables
-inputs = []
-outputs_results = []
-outputs_scores = []
+    filename = (f'logs/{datetime.now()}.log').replace(':', '')
+    file_handler = logging.FileHandler(filename)
+    stream_handler = logging.StreamHandler()
 
-conference_names = open('conferences.txt').read().split('\n')
+    format = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s')
+    file_handler.setFormatter(format)
+    stream_handler.setFormatter(format)
 
-# Loop through each year
-while True:
-	print(year)
-	game_index = []  # Keep track of which games were played
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
 
-	if use_conference_id:
-		# Get all conference teams
-		conference_teams = []
 
-		for conference_name in conference_names:
-			conference = Conference(conference_name.lower(), str(year))
-			conference_teams.append(list(conference.teams.values()))
+def get_conference_teams():
+    """Get all teams for each conference in the current year"""
+    conference_teams = []
 
-	# Get all team statistics and append one-hot vector of conference id
-	all_team_names = []
-	all_team_stats_list = []
+    for conference_name in conference_names:
+        conference = Conference(conference_name.lower(), str(year))
+        conference_teams.append(list(conference.teams))
+    
+    return conference_teams
 
-	for team in Teams(str(year)):
-		team_name = team.name
-		team_values_list = []
 
-		# Team stats
-		try:
-			team_stats = team.dataframe.to_numpy()
-			team_stats = np.where(team_stats == None, 0, team_stats)
-			team_stats[0][0] = 0
-			team_stats[0][7] = 0
-			team_stats[0][25] = 0
-		except Exception as e:
-			continue
+def get_teams():
+    teams = {}
 
-		all_team_names.append(team.abbreviation.lower())
-		team_values_list.append(team_stats)
+    for team in Teams(str(year)):
+        team_name = team.abbreviation
+        roster = {}
+        remove_indices = [5, 20, 28, 31, 34]  # Indices that are strings
 
-		# Conference id
-		if use_conference_id:
-			conference_id = len(conference_names) + 0
-			for i in range(len(conference_teams)):
-				if team_name in conference_teams[i]:
-					conference_id = i + 0
-					break
-				continue
+        for player in team.roster.players:
+            player_data = player.dataframe.loc[f'{year - 1}-{str(year)[2:]}'].to_numpy()
+            player_fixed_data = np.expand_dims(np.delete(player_data, remove_indices), axis=0)
+            roster[player.player_id] = player_fixed_data.tolist()
+    
+        teams[team_name] = roster
+        sleep(1)
+    
+    return teams
 
-			conference_id_array = np.zeros((1, len(conference_names) + 1))
-			conference_id_array[0][conference_id] = 1
-			team_values_list.append(conference_id_array)
 
-		if use_n_players_stats or use_players_summary:
-			roster = team.roster.players
-			
-			roster_stats = []
-			for p in roster:
-				roster_stats.append([])
-				for v in roster_vars:
-					roster_stats[-1].append(eval(f'p.{v}'))
+if __name__ == '__main__':
+    start_logging()
+    logger = logging.getLogger('defy')
 
-			if use_n_players_stats:
-				n_players_stats_list = roster_stats[:n_players]
-				n_players_stats = np.concatenate(n_players_stats_list, axis=1)
-				team_values_list.append(n_players_stats)
-			
-			if use_players_summary:
-				player_summary_list = []
-				for s in range(len(roster_stats[0])):
-					stats = [p[s] for p in roster_stats]
-					mean_value = mean(stats)
-					stdev_value = stdev(stats)
-					player_summary_list.extend([mean_value, stdev_value])
-				team_values_list.append(np.array(player_summary_list))
+    # Network input and output variables
+    inputs = []
+    outputs_results = []
 
-		# Concatenate all team values
-		all_team_stats_list.append(np.concatenate(team_values_list, axis=1))
+    with open('setup/conferences.txt') as file:
+        conference_names = file.read().split('\n')
 
-	quit()
+    # Get data
+    while True:
+        logger.info(year)
 
-	# Normalize team stats and convert back to list
-	# all_team_stats_array = normalize(np.concatenate(all_team_stats_list, axis=0))
-	all_team_stats_array = np.concatenate(all_team_stats_list, axis=0)
-	all_team_stats_list = [np.expand_dims(i, axis=0) for i in all_team_stats_array]
+        # Get all conference teams and team data
+        if os.path.isfile(f'data/conferences_{year}.json'):
+            logger.info('\tConference file exists, loading...')
+            with open(f'data/conferences_{year}.json') as file:
+                conference_teams = json.load(file)
+        else:
+            logger.info('\tConference file does not exist, gathering data from API...')
+            conference_teams = get_conference_teams()
 
-	if year == 2021:
-		# Save current teams and their statistics
-		open('current_teams.txt', 'w').write('\n'.join(all_team_names))
-		np.savez('current_team_stats.npz', team_stats=all_team_stats_array)
+            # Save data for future use
+            with open(f'data/conferences_{year}.json', 'w') as file:
+                json.dump(conference_teams, file)
 
-	# Go through each team's schedule to create data
-	for i in range(len(all_team_names)):
-		try:
-			schedule = Schedule(all_team_names[i].lower(), str(year))
-			games_data = schedule.dataframe.to_numpy()
-		except Exception as e:
-			print(all_team_names[i])
-			continue
+        if os.path.isfile(f'data/data_{year}.npz'):
+            logger.info('\tYear data exists, skipping...')
 
-		opponents = [game[6].lower() for game in games_data]
-		team_score = [game[12] for game in games_data]
-		opponent_score = [game[11] for game in games_data]
-		results = [0 if game[13] == 'Win' else 1 for game in games_data]
-		indices = [str(game[3]) for game in games_data]
+            # Check if this is the last year
+            if year == end_year:
+                break
 
-		# Scrub data
-		while True:
-			if team_score[-1] == None:
-				opponents.pop()
-				team_score.pop()
-				opponent_score.pop()
-				results.pop()
-			else:
-				break
-			continue
+            year -= 1
+            continue
 
-		# Create inputs and outputs
-		for j in range(len(opponents)):
-			try:
-				opponent_index = all_team_names.index(opponents[j])
-			except Exception as e:
-				sleep(1)
-				continue
+        if os.path.isfile(f'data/teams_{year}.json'):
+            logger.info('\tTeams data file exists, loading...')
+            with open(f'data/teams_{year}.json') as file:
+                teams = json.load(file)
+        else:
+            logger.info('\tTeams data file does not exist, gathering data from API...')
+            teams = get_teams()
 
-			if indices[j] in game_index:
-				# Game already in data
-				continue
+            # Save data
+            with open(f'data/teams_{year}.json', 'w') as file:
+                json.dump(teams, file)
 
-			inputs.append(np.concatenate((all_team_stats_list[i], all_team_stats_list[opponent_index]), axis=1))
-			outputs_scores.append(np.array([[team_score[j], opponent_score[j]]]))
-			outputs_results.append(np.zeros((1, 2)))
-			outputs_results[-1][0][results[j]] = 1
-			game_index.append(indices[j] + '')
-		continue
+        # For each team, get schedule and add to data
+        game_index = []  # Ensures every game is counted once instead of twice
 
-	# Check if this is the last year
-	if year == end_year:
-		break
+        for team in teams:
+            logger.info(f'\tGetting schedule for {team}...')
 
-	year -= 1
+            team_players = teams[team]
+            team_conference = np.expand_dims(np.array([int(team.lower() in c) for c in conference_teams]), axis=0)
 
-# Concatenate each list
-input_array = np.concatenate(inputs, axis=0)
-output_results_array = np.concatenate(outputs_results, axis=0)
-output_scores_array = np.concatenate(outputs_scores, axis=0)
+            try:
+                schedule = Schedule(team.lower(), str(year))
+            except Exception as e:
+                logger.info(f'\t\tNo schedule.')
+                continue
 
-# Save the network's inputs and outputs
-np.savez('data.npz', inputs=input_array, outputs_results=output_results_array, outputs_scores=output_scores_array)
+            for game in schedule:
+                if game.points_for == None:
+                    # If the game hasn't been played yet, skip it
+                    continue
+
+                if game.datetime in game_index:
+                    # If the game has already been counted, skip it
+                    logger.info(f'\t\t\tSkipping {game.datetime}')
+                    continue
+
+                if year == 2021 and game.type.lower() == 'ncaa':
+                    # For testing purposes, we won't include March Madness games of 2021
+                    continue
+
+                logger.info(f'\t\t\t{game.datetime}')
+                game_index.append(game.datetime)
+
+                win_index = 0 if game.result == 'Win' else 1
+                opponent = game.opponent_abbr
+
+                if opponent.upper() in teams:
+                    opponent_players = teams[opponent.upper()]
+                else:
+                    logger.info(f'\t\t\t\tSkipping, opponent not in teams')
+                    continue
+
+                boxscore = game.boxscore
+                home_players = [list(p.dataframe.index)[0] for p in boxscore.home_players]
+                away_players = [list(p.dataframe.index)[0] for p in boxscore.away_players]
+
+                # Find if team is home or away
+                try:
+                    if home_players[0] in team_players:
+                        game_team_players = [team_players[p] for p in home_players]
+                        game_opponent_players = [opponent_players[p] for p in away_players]
+                    else:
+                        game_team_players = [team_players[p] for p in away_players]
+                        game_opponent_players = [opponent_players[p] for p in home_players]
+                except:
+                    # This is for players like Travonta Doolittle
+                    # For some reason on one of the pages his name is written Travonte
+                    # And there's Quoiren Waldon, where the boxscore had it as Walden
+                    # Instead of dealing with each individually, we're going to throw out the game
+                    logger.info('\t\t\t\tSkipping, bad player name')
+                    continue
+
+                # Pad with zeros if they don't have 12 players
+                for i in range(12 - len(game_team_players)):
+                    game_team_players.append(np.zeros_like(game_team_players[0]))
+                
+                for i in range(12 - len(game_opponent_players)):
+                    game_opponent_players.append(np.zeros_like(game_opponent_players[0]))
+                
+                # Concatenate player data, then add on conference id
+                team_concat = np.concatenate(game_team_players[:12], axis=1)
+                opponent_concat = np.concatenate(game_opponent_players[:12], axis=1)
+
+                opponent_conference = np.expand_dims(np.array([int(opponent.lower() in c) for c in conference_teams]), axis=0)
+
+                team_concat = np.concatenate((team_concat, team_conference), axis=1)
+                opponent_concat = np.concatenate((opponent_concat, opponent_conference), axis=1)
+
+                # Make input and output
+                game_input = np.concatenate((team_concat, opponent_concat), axis=1)
+                game_output = np.zeros((1, 2))
+                game_output[0][win_index] = 1
+
+                inputs.append(game_input)
+                outputs_results.append(game_output)
+                sleep(0.5)
+            sleep(1)
+
+        year_inputs = np.concatenate(inputs, axis=0)
+        year_outputs = np.concatenate(outputs_results, axis=0)
+
+        np.savez(f'data/data_{year}.npz', inputs=year_inputs, outputs_results=year_outputs)
+
+        # Check if this is the last year
+        if year == end_year:
+            break
+
+        year -= 1
+        sleep(1)
