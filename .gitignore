@@ -1,0 +1,10 @@
+/data
+/logs
+/networks
+/old
+/result_backup
+/tensorboards
+
+_ideas.txt
+_todo.txt
+test.py
