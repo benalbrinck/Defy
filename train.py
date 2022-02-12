@@ -1,18 +1,12 @@
 import defy_logging
 import random
+import yaml
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
 
 
 # Parameters
-year = 2021
-end_year = 2016
-
-validation_percent = 30
-activation_function = 'relu'
-epochs = 25
-
 checkpoint_path = f'networks/{datetime.now()}.ckpt'.replace(':', '')  # In simulate.py, we'll get latest one unless override
 tensorboard_path = f'tensorboards/{datetime.now()}'.replace(':', '')
 
@@ -27,6 +21,23 @@ def flip_data(x):
 
 if __name__ == '__main__':
 	logger = defy_logging.get_logger()
+
+	with open('setup/config.yml') as file:
+		config = yaml.safe_load(file)
+
+	year = config['global']['start_year']
+	end_year = config['global']['end_year']
+
+	validation_percent = config['train']['validation_percent']
+	activation_function = config['train']['activation_function']
+	epochs = config['train']['epochs']
+
+	if config['train']['auto_set_ckpt']:
+		# Automatically set the checkpoint path
+		config['simulate']['checkpoint_path'] = checkpoint_path
+
+		with open('setup/config.yml', 'w') as file:
+			yaml.dump(config, file, default_flow_style=False)
 
 	# Get training data
 	logger.info('Getting training data...')
