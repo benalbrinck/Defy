@@ -1,3 +1,4 @@
+import check
 import defy_logging
 import json
 import yaml
@@ -151,5 +152,5 @@ if __name__ == '__main__':
 	with open(f'results/{results_file_name}.txt', 'w') as file:
 		file.write(results_string)
 
-	print('\n\n\n\n')
-	import check
+	logger.info('Running check...')
+	check.check_results(logger)

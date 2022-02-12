@@ -9,3 +9,5 @@ train:
   auto_set_ckpt: true
   epochs: 25
   validation_percent: 30
+visual:
+  use_true_results: False

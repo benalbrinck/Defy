@@ -1,18 +1,12 @@
+import yaml
 import PySimpleGUI as sg
 from math import ceil
 
 def display_tournament(teams, results, first_four=True):
-    # Split will be if you want it in half on either side of screen
-
-    # Pretty much have a 1 gap between each on the first layer
-    # Add 1 to top of second layer, then have a 3 gap (and so on)
-
     teams = teams.strip().split('\n\n')
     results = results.strip().split('\n\n')
 
     if first_four:
-        # Do whatever to display them (probably in a col to the left)
-        # Probably replace teams who win in the teams thing
         teams = teams[1:]
         results = results[1:]
 
@@ -80,11 +74,23 @@ def display_tournament(teams, results, first_four=True):
     window.close()
 
 if __name__ == '__main__':
-    # Testing
-    with open('true_results.txt') as file:
-        results = file.read()
+    # Get config
+    with open('setup/config.yml') as file:
+        config = yaml.safe_load(file)
 
-    with open('tournament_teams.txt') as file:
+    use_true_results = config['visual']['use_true_results']
+    checkpoint_path = config['simulate']['checkpoint_path']
+    results_file_name = checkpoint_path.replace('networks/', '')[:-5]
+
+    # Get results and teams
+    if use_true_results:
+        with open('setup/true_results.txt') as file:
+            results = file.read()
+    else:
+        with open(f'results/{results_file_name}.txt') as file:
+            results = file.read()
+
+    with open('setup/tournament_teams.txt') as file:
         teams = file.read()
 
     display_tournament(teams, results)
