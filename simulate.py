@@ -1,28 +1,9 @@
 import defy_logging
 import json
+import yaml
 import numpy as np
 import tensorflow as tf
 from sportsreference.ncaab.conferences import Conference
-
-# Parameters
-year = 2021
-checkpoint_path = 'networks/2022-02-07 081427.591419.ckpt'
-
-removed_players = [
-	'joshua-primo-1', 'jaylin-williams-2', 'khalen-robinson-1', 'rj-cole-1',
-	'shereef-mitchell-1', 'roman-penn-1', 'shanquan-hemphill-1', 'keyontae-johnson-1',
-	'jalen-harris-13', 'tristan-maxwell-1', 'jwan-roberts-1', 'caleb-mills-1',
-	'jack-nunge-1', 'jalen-wilson-1', 'david-mccormack-1', 'tristan-enaruna-1',
-	'jace-bass-1', 'isaiah-livers-1', 'marlon-ruffin-1', 'puff-johnson-1',
-	'rubin-jones-1', 'kyle-young-3', 'jimmy-sotos-1', 'chris-harrisjr-1',
-	'donovan-williams-4', 'nfaly-dante-1', 'ethan-morton-1', 'grant-golden-1',
-	'blake-francis-1', 'anthony-roberts-2', 'bourama-sidibe-1', 'frank-anselem-1',
-	'chaz-owens-1', 'john-fulkerson-1', 'jamarius-burton-1', 'joel-ntambwe-1',
-	'jalen-hill-1', 'chris-smith-19', 'keshawn-curry-1', 'collin-gillespie-1',
-	'jalen-cone-1', 'cartier-diarra-1', 'isaiah-poorbear-chandler-1', 'jaden-seymour-1',
-	'trevin-wade-1'
-]
-# removed_players = []
 
 
 def get_conference_teams():
@@ -91,11 +72,23 @@ def simulate_round(teams):
 if __name__ == '__main__':
 	logger = defy_logging.get_logger()
 
-	conference_names = open('conferences.txt').read().split('\n')
+	with open('setup/conferences.txt') as file:
+		conference_names = file.read().split('\n')
+	
+	with open('setup/removed_players.txt') as file:
+		removed_players = file.read().split('\n')
+
+	with open('setup/config.yml') as file:
+		config = yaml.safe_load(file)
+
+	year = config['global']['start_year']
+	activation_function = config['train']['activation_function']
+	checkpoint_path = config['simulate']['checkpoint_path']
 
 	# Get all conference teams and team data
 	logger.info('Get conference teams...')
-	conference_teams = get_conference_teams()
+	with open(f'data/conferences_{year}.json') as file:
+		conference_teams = json.load(file)
 
 	logger.info('Get team data...')
 	with open(f'data/teams_{year}.json') as file:
@@ -103,7 +96,9 @@ if __name__ == '__main__':
 
 	# Get teams for tournament
 	logger.info('Getting tournament teams and normalization value...')
-	split_text = open('tournament_teams.txt').read().split('\n\n')
+	with open('setup/tournament_teams.txt') as file:
+		split_text = file.read().split('\n\n')
+	
 	first_four_teams = split_text[0].split('\n')
 	tournament_string = split_text[1] + ''
 
@@ -114,7 +109,6 @@ if __name__ == '__main__':
 
 	# Load model
 	logger.info('Loading network...')
-	activation_function = 'relu'
 	model = tf.keras.models.Sequential([
 		tf.keras.layers.Dense(128, activation=activation_function, input_shape=(1168,)),
 		tf.keras.layers.Dropout(0.1),
@@ -152,7 +146,10 @@ if __name__ == '__main__':
 		results_string += '\n'.join(round_result) + '\n\n'
 		tournament_teams = round_result
 
-	open('tournament_results.txt', 'w').write(results_string)
+	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
+
+	with open(f'results/{results_file_name}.txt', 'w') as file:
+		file.write(results_string)
 
 	print('\n\n\n\n')
 	import check

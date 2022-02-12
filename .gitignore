@@ -129,6 +129,7 @@ cython_debug/
 /data
 /logs
 /networks
+/results
 /old
 /result_backup
 /tensorboards
