@@ -1,15 +1,12 @@
 import defy_logging
 import json
 import os
+import yaml
 import numpy as np
 from sportsreference.ncaab.conferences import Conference
 from sportsreference.ncaab.teams import Teams
 from sportsreference.ncaab.schedule import Schedule
 from time import sleep
-
-
-year = 2021
-end_year = 2016
 
 
 def get_conference_teams():
@@ -44,6 +41,12 @@ def get_teams():
 
 if __name__ == '__main__':
     logger = defy_logging.get_logger()
+
+    with open('setup/config.yml') as file:
+        config = yaml.safe_load(file)
+    
+    year = config['global']['start_year']
+    end_year = config['global']['end_year']
 
     # Network input and output variables
     inputs = []

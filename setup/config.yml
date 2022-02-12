@@ -1,0 +1,9 @@
+global:
+  start_year: 2021
+  end_year: 2016
+train:
+  validation_percent: 30
+  activation_function: relu
+  epochs: 25
+simulate:
+  checkpoint_path: 
