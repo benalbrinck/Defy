@@ -1,5 +1,6 @@
 import check
 import defy_logging
+import defy_model
 import json
 import yaml
 import numpy as np
@@ -83,7 +84,6 @@ if __name__ == '__main__':
 		config = yaml.safe_load(file)
 
 	year = config['global']['start_year']
-	activation_function = config['train']['activation_function']
 	checkpoint_path = config['simulate']['checkpoint_path']
 
 	# Get all conference teams and team data
@@ -110,16 +110,7 @@ if __name__ == '__main__':
 
 	# Load model
 	logger.info('Loading network...')
-	model = tf.keras.models.Sequential([
-		tf.keras.layers.Dense(128, activation=activation_function, input_shape=(1168,)),
-		tf.keras.layers.Dropout(0.1),
-		tf.keras.layers.Dense(32, activation=activation_function),
-		tf.keras.layers.Dropout(0.1),
-		tf.keras.layers.Dense(2, activation='softmax')
-	])
-	loss_function = tf.keras.losses.BinaryCrossentropy()
-	model.compile(optimizer='adam', loss=loss_function, metrics=['accuracy'])
-	model.load_weights(checkpoint_path)
+	model = defy_model.get_model()
 
 	# String to record results
 	results_string = ''

@@ -1,8 +1,10 @@
 import defy_logging
+import defy_model
 import random
 import yaml
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 from datetime import datetime
 
 
@@ -29,7 +31,6 @@ if __name__ == '__main__':
 	end_year = config['global']['end_year']
 
 	validation_percent = config['train']['validation_percent']
-	activation_function = config['train']['activation_function']
 	epochs = config['train']['epochs']
 
 	if config['train']['auto_set_ckpt']:
@@ -88,17 +89,10 @@ if __name__ == '__main__':
 	tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_path)
 
 	logger.info('Creating network...')
-	model = tf.keras.models.Sequential([
-		tf.keras.layers.Dense(128, activation=activation_function, input_shape=(1168,)),
-		tf.keras.layers.Dropout(0.1),
-		tf.keras.layers.Dense(32, activation=activation_function),
-		tf.keras.layers.Dropout(0.1),
-		tf.keras.layers.Dense(2, activation='softmax')
-	])
-	loss_function = tf.keras.losses.BinaryCrossentropy()
-	model.compile(optimizer='adam', loss=loss_function, metrics=['accuracy'])
+	model = defy_model.get_model()
 
 	# Create checkpoint
+	# Have to figure out how to save the temp
 	checkpoint = tf.keras.callbacks.ModelCheckpoint(
 		filepath=checkpoint_path,
 		save_weights_only=True,
