@@ -6,12 +6,12 @@ def get_model(simulate=False, temperature=1):
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
 
-	activation_function = config['train']['activation_function']
-
 	model = tf.keras.models.Sequential([
-		tf.keras.layers.Dense(128, activation=activation_function, input_shape=(1168,)),
+		tf.keras.layers.Dense(128, input_shape=(1168,)),
+		tf.keras.layers.LeakyReLU(),
 		tf.keras.layers.Dropout(0.1),
-		tf.keras.layers.Dense(32, activation=activation_function),
+		tf.keras.layers.Dense(32),
+		tf.keras.layers.LeakyReLU(),
 		tf.keras.layers.Dropout(0.1),
 		tf.keras.layers.Dense(2)
 	])
