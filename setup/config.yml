@@ -2,12 +2,12 @@ global:
   end_year: 2016
   start_year: 2021
 simulate:
-  checkpoint_path: networks/2022-02-12 114632.419977.ckpt
+  checkpoint_path: networks/2022-02-14 195842.355191.ckpt
   use_removed_players: true
 train:
   activation_function: relu
   auto_set_ckpt: true
-  epochs: 25
+  epochs: 50
   validation_percent: 30
 visual:
-  use_true_results: False
+  use_true_results: false

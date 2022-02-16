@@ -55,20 +55,25 @@ def simulate_game(team1, team2):
 	# max_index = np.random.choice(np.array([0, 1]), p=np.squeeze(result))
 	max_index = int(result[0][1] > result[0][0])
 
-	return max_index, result
+	return max_index, result[0][max_index]
 
 
 def simulate_round(teams):
 	"""Simulate each game in the round."""
 	result_teams = []
-	result_arrays = []
+	result_probs = []
 
 	for game in range(int(len(teams) / 2)):
-		result_index, result_array = simulate_game(teams[game * 2], teams[(game * 2) + 1])
+		result_index, result_prob = simulate_game(teams[game * 2], teams[(game * 2) + 1])
 		result_teams.append(teams[(game * 2) + result_index])
-		result_arrays.append(result_array)
+		result_probs.append(result_prob)
 	
-	return result_teams, result_arrays
+	return result_teams, result_probs
+
+
+def display_results(round_result, round_prob):
+	for i, r in enumerate(round_result):
+		logger.info(f'{r}, {round(round_prob[i] * 100, 2)}%')
 
 
 if __name__ == '__main__':
@@ -110,16 +115,20 @@ if __name__ == '__main__':
 
 	# Load model
 	logger.info('Loading network...')
-	model = defy_model.get_model()
+
+	with open(f'{checkpoint_path[:-5]}.temp') as file:
+		temperature = float(file.read())
+
+	model = defy_model.get_model(simulate=True, temperature=temperature)
+	model.load_weights(checkpoint_path)
 
 	# String to record results
 	results_string = ''
 
 	# First Four
 	logger.info('First Four:')
-	first_four_result, first_four_arrays = simulate_round(first_four_teams)
-	first_four_display = '\n'.join([f'{r}, {first_four_arrays[i]}' for i, r in enumerate(first_four_result)])
-	logger.info(first_four_display + '\n')
+	first_four_result, first_four_prob = simulate_round(first_four_teams)
+	display_results(first_four_result, first_four_prob)
 	results_string += '\n'.join(first_four_result) + '\n\n'
 	first_four_split = first_four_result
 
@@ -130,10 +139,9 @@ if __name__ == '__main__':
 	# Simulate main tournament
 	for tournament_round in range(6):
 		logger.info(f'Round {tournament_round + 1}:')
-		round_result, round_arrays = simulate_round(tournament_teams)
-		round_display = '\n'.join([f'{r}, {round_arrays[i]}' for i, r in enumerate(round_result)])
-		logger.info(round_display + '\n')
-
+		round_result, round_prob = simulate_round(tournament_teams)
+		display_results(round_result, round_prob)
+		
 		# Record results and repeat
 		results_string += '\n'.join(round_result) + '\n\n'
 		tournament_teams = round_result

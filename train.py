@@ -4,7 +4,6 @@ import random
 import yaml
 import numpy as np
 import tensorflow as tf
-import tensorflow_addons as tfa
 from datetime import datetime
 
 
@@ -19,6 +18,13 @@ def flip_data(x):
 	half_two = x[:, pivot:]
 
 	return np.concatenate((half_two, half_one), axis=1)
+
+
+def temperature_loss():
+	temperature_model = tf.math.divide(predicted_outputs, temperature)
+	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(validation_outputs, temperature_model))
+
+	return loss
 
 
 if __name__ == '__main__':
@@ -104,10 +110,30 @@ if __name__ == '__main__':
 	model.fit(
 		training_inputs,
 		training_outputs,
+		batch_size=32,
 		epochs=epochs, 
 		callbacks=[checkpoint, tensorboard_callback],
-		validation_data=(validation_inputs, validation_outputs)
+		validation_data=(validation_inputs, validation_outputs),
+		shuffle=True
 	)
 
 	# Check accuracy
-	logger.info(model.evaluate(validation_inputs, validation_outputs, verbose=2))
+	validation_accuracy = model.evaluate(validation_inputs, validation_outputs, verbose=2)
+	logger.info(f'Validation Loss, Accuracy: {validation_accuracy}')
+
+	# Calculate temperature value
+	logger.info('Getting temperature value...')
+	predicted_outputs = model(validation_inputs)
+
+	temperature = tf.Variable(initial_value=1.0, trainable=True, dtype=tf.float32)
+	optimizer = tf.optimizers.Adam(learning_rate=0.01)
+
+	for i in range(300):
+		opts = optimizer.minimize(temperature_loss, var_list=[temperature])
+	
+	logger.info(f'Temperature Value: {temperature.numpy()}')
+	logger.info('Saving value...')
+	file_name = checkpoint_path[:-5]
+
+	with open(f'{file_name}.temp', 'w') as file:
+		file.write(str(temperature.numpy()))
