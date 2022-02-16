@@ -1,4 +1,8 @@
-import check
+
+# Probability: literally just all the things multiplied together
+# Expected value: I think it is the prob that the matchup happens * prob that it picked correctly
+#   * the points you would get for that round all added up
+
 import defy_logging
 import defy_model
 import json
@@ -49,30 +53,31 @@ def simulate_game(team1, team2):
 
 	# You can also add in flipped data
 
-	# Pick index of the winner based on probabilities from result
+	# Get probabilities
 	result = model(normal_game_input).numpy()
-	# max_index = np.random.choice(np.array([0, 1]), p=np.squeeze(result))
-	max_index = int(result[0][1] > result[0][0])
 
-	return max_index, result[0][max_index]
+	return result[0]
 
 
-def simulate_round(teams):
-	"""Simulate each game in the round."""
-	result_teams = []
-	result_probs = []
+def simulate_round(teams, correct_teams):
+    """Simulate each game in the round."""
+    result_probs = []
 
-	for game in range(int(len(teams) / 2)):
-		result_index, result_prob = simulate_game(teams[game * 2], teams[(game * 2) + 1])
-		result_teams.append(teams[(game * 2) + result_index])
-		result_probs.append(result_prob)
-	
-	return result_teams, result_probs
+    for game in range(int(len(teams) / 2)):
+        result_prob = simulate_game(teams[game * 2], teams[(game * 2) + 1])
+
+        if teams[game * 2] == correct_teams[game]:
+            # First team wins
+            result_probs.append(result_prob[0])
+        else:
+            result_probs.append(result_prob[1])
+
+    return result_probs
 
 
-def display_results(round_result, round_prob):
-	for i, r in enumerate(round_result):
-		logger.info(f'{r}, {round(round_prob[i] * 100, 2)}%')
+def display_results(round_prob):
+	for i, p in enumerate(round_prob):
+		logger.info(f'{i}, {round(p * 100, 2)}%')
 
 
 if __name__ == '__main__':
@@ -83,6 +88,9 @@ if __name__ == '__main__':
 	
 	with open('setup/removed_players.txt') as file:
 		removed_players = file.read().split('\n')
+	
+	with open('setup/true_results.txt') as file:
+		true_results = [r.split('\n') for r in file.read().split('\n\n')]
 
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
@@ -91,7 +99,7 @@ if __name__ == '__main__':
 	checkpoint_path = config['simulate']['checkpoint_path']
 
 	# Get all conference teams and team data
-	logger.info('Get conference teams...')
+	# logger.info('Get conference teams...')
 	with open(f'data/conferences_{year}.json') as file:
 		conference_teams = json.load(file)
 
@@ -126,29 +134,43 @@ if __name__ == '__main__':
 
 	# First Four
 	logger.info('First Four:')
-	first_four_result, first_four_prob = simulate_round(first_four_teams)
-	display_results(first_four_result, first_four_prob)
-	results_string += '\n'.join(first_four_result) + '\n\n'
-	first_four_split = first_four_result
+	first_four_prob = simulate_round(first_four_teams, true_results[0])
+	display_results(first_four_prob)
+	results_string += '\n'.join([str(p) for p in first_four_prob]) + '\n\n'
+	first_four_split = true_results[0]
 
 	# Rest of tournament
 	# Insert first four into the main tournament
+	expected_score = 0
 	tournament_teams = tournament_string.format(*first_four_split).split('\n')
+	tournament_probs = []
+
+	first_four_index = 0
+	for t in tournament_string.split('\n'):
+		if t == '{}':
+			tournament_probs.append(first_four_prob[first_four_index])
+			first_four_index += 1
+		else:
+			tournament_probs.append(1)
 
 	# Simulate main tournament
 	for tournament_round in range(6):
 		logger.info(f'Round {tournament_round + 1}:')
-		round_result, round_prob = simulate_round(tournament_teams)
-		display_results(round_result, round_prob)
+		round_prob = simulate_round(tournament_teams, true_results[tournament_round + 1])
+		display_results(round_prob)
+
+		# Calculate running probabilities and expected score
+		tournament_probs = [round_prob[p] * (tournament_probs[p * 2] * tournament_probs[(p * 2) + 1]) for p in range(len(round_prob))]
+		expected_score += sum([p * ((2 ** tournament_round) * 10) for p in tournament_probs])
 		
 		# Record results and repeat
-		results_string += '\n'.join(round_result) + '\n\n'
-		tournament_teams = round_result
+		results_string += '\n'.join([str(p) for p in round_prob]) + '\n\n'
+		tournament_teams = true_results[tournament_round + 1]
+
+	logger.info(f'Probability of picking perfectly: {tournament_probs[0] * 100}%')
+	logger.info(f'Expected score: {expected_score}')
 
 	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
 
-	with open(f'results/{results_file_name}.txt', 'w') as file:
+	with open(f'results/{results_file_name}_probs.txt', 'w') as file:
 		file.write(results_string)
-
-	logger.info('Running check...')
-	check.check_results(logger)

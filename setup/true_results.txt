@@ -1,7 +1,7 @@
 norfolk-state
 drake
-ucla
 texas-southern
+ucla
 
 gonzaga
 oklahoma
