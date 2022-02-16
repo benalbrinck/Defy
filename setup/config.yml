@@ -2,7 +2,7 @@ global:
   end_year: 2016
   start_year: 2021
 simulate:
-  checkpoint_path: networks/2022-02-16 091313.208944.ckpt
+  checkpoint_path: networks/2022-02-16 092300.321909.ckpt
   use_removed_players: true
 train:
   auto_set_ckpt: true

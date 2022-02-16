@@ -8,9 +8,11 @@ def get_model(simulate=False, temperature=1):
 
 	model = tf.keras.models.Sequential([
 		tf.keras.layers.Dense(128, input_shape=(1168,)),
+		tf.keras.layers.GaussianNoise(0.1),
 		tf.keras.layers.LeakyReLU(),
 		tf.keras.layers.Dropout(0.1),
 		tf.keras.layers.Dense(32),
+		tf.keras.layers.GaussianNoise(0.1),
 		tf.keras.layers.LeakyReLU(),
 		tf.keras.layers.Dropout(0.1),
 		tf.keras.layers.Dense(2)
