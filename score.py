@@ -2,6 +2,7 @@ import collections
 import defy_logging
 import defy_model
 import json
+import pickle
 import yaml
 import numpy as np
 from sportsreference.ncaab.conferences import Conference
@@ -115,6 +116,10 @@ if __name__ == '__main__':
 
 	year = config['global']['start_year']
 	checkpoint_path = config['simulate']['checkpoint_path']
+	use_removed_players = config['simulate']['use_removed_players']
+
+	if not use_removed_players:
+		removed_players = []
 
 	# Get all conference teams and team data
 	# logger.info('Get conference teams...')
@@ -128,15 +133,11 @@ if __name__ == '__main__':
 	# Get teams for tournament
 	logger.info('Getting tournament teams and normalization value...')
 	with open('setup/tournament_teams.txt') as file:
-		split_text = file.read().split('\n\n')
+		split_text = file.read().split('\n')
 	
-	first_four_teams = []
 	tournament_teams = []
 
-	for t in split_text[0].split('\n'):
-		first_four_teams.append({ t: 1 })
-	
-	for t in split_text[1].split('\n'):
+	for t in split_text:
 		tournament_teams.append({ t: 1 })
 
 	# Get normalization value
@@ -154,41 +155,24 @@ if __name__ == '__main__':
 	model.load_weights(checkpoint_path)
 
 	# String to record results
-	results_string = ''
-
-	# First Four
-	logger.info('First Four:')
-	first_four_results, first_four_prob = simulate_round(first_four_teams, true_results[0])
-	display_results(first_four_prob)
-	results_string += '\n'.join([str(p) for p in first_four_prob]) + '\n\n'
-
-	# Rest of tournament
-	# Insert first four into the main tournament
+	results_probs = []
 	expected_score = 0
-	first_four_index = 0
-
-	for i, t in enumerate(tournament_teams):
-		if list(t.keys())[0] == '{}':
-			tournament_teams[i] = first_four_results[first_four_index]
-			first_four_index += 1
 
 	# Simulate main tournament
 	for tournament_round in range(6):
 		logger.info(f'Round {tournament_round + 1}:')
-		round_results, round_prob = simulate_round(tournament_teams, true_results[tournament_round + 1])
+		round_results, round_prob = simulate_round(tournament_teams, true_results[tournament_round])
 		display_results(round_prob)
 
 		# Calculate running probabilities and expected score
 		expected_score += sum([p * ((2 ** tournament_round) * 10) for p in round_prob])
 		
 		# Record results and repeat
-		results_string += '\n'.join([str(p) for p in round_prob]) + '\n\n'
+		results_probs.append(round_results[:])
 		tournament_teams = round_results[:]
 
 	logger.info(f'Expected score: {expected_score}')
-	logger.info(tournament_teams)
-
 	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
 
-	with open(f'results/{results_file_name}_probs.txt', 'w') as file:
-		file.write(results_string)
+	with open(f'results/{results_file_name}_probs.txt', 'wb') as file:
+		pickle.dump(results_probs, file)

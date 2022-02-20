@@ -1,14 +1,5 @@
-norfolk-state
-appalachian-state
-wichita-state
-drake
-mount-st-marys
-texas-southern
-michigan-state
-ucla
-
 gonzaga
-{}
+norfolk-state
 oklahoma
 missouri
 creighton
@@ -16,7 +7,7 @@ california-santa-barbara
 virginia
 ohio
 southern-california
-{}
+drake
 kansas
 eastern-washington
 oregon
@@ -24,7 +15,7 @@ virginia-commonwealth
 iowa
 grand-canyon
 michigan
-{}
+texas-southern
 louisiana-state
 st-bonaventure
 colorado
@@ -32,7 +23,7 @@ georgetown
 florida-state
 north-carolina-greensboro
 brigham-young
-{}
+ucla
 texas
 abilene-christian
 connecticut

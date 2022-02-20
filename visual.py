@@ -6,10 +6,6 @@ def display_tournament(teams, results, first_four=True):
     teams = teams.strip().split('\n\n')
     results = results.strip().split('\n\n')
 
-    if first_four:
-        teams = teams[1:]
-        results = results[1:]
-
     sg.theme('DarkBlack1')
     initial_teams = teams[0].split('\n')
     layout = [[] for i in range(int(len(initial_teams) / 2))]

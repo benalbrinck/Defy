@@ -12,7 +12,7 @@ def check_results(logger):
 
 	# Get true and simulated results
 	with open(f'results/{results_file_name}.txt') as file:
-		predicted_results = [r.split('\n') for r in file.read().split('\n\n')[:-1]]
+		predicted_results = [r.split('\n') for r in file.read().split('\n\n')]
 
 	with open('setup/true_results.txt') as file:
 		true_results = [r.split('\n') for r in file.read().split('\n\n')]
@@ -29,10 +29,9 @@ def check_results(logger):
 			right_bool = int(predicted_results[r][g] == true_results[r][g])
 			amount_right += right_bool
 
-			if r != 0:
-				# Add on points if not the play-in games
-				points += ((2 ** (r - 1)) * 10) * right_bool
-				max_points += (2 ** (r - 1)) * 10
+			# Add on points
+			points += ((2 ** r) * 10) * right_bool
+			max_points += (2 ** r) * 10
 
 			logger.info(f'{predicted_results[r][g]}\t{right_bool}\t{true_results[r][g]}')
 
