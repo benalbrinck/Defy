@@ -1,6 +1,3 @@
-# I think we want this to be where you run everything in the future...
-
-
 # https://www.youtube.com/watch?v=SelawmXHtPg
 # Modern: https://github.com/Wanderson-Magalhaes/Modern_GUI_PyDracula_PySide6_or_PyQt6
 
@@ -10,10 +7,6 @@
 # black
 # white
 # darkred
-
-# Yeah maybe try to figure out the spacing better
-# Cus it should be in the middle of the two that go into it
-# Then have a lookup table that has better names for everyone
 
 
 import sys
@@ -79,6 +72,10 @@ class MainWindow(QMainWindow):
 
 class Team(QLabel):
     def __init__(self, team) -> None:
+        # Find display name
+        if team in display_names:
+            team = display_names[team]
+
         super().__init__(team)
         self.setAutoFillBackground(True)
         self.setMaximumSize(120, 40)
@@ -88,7 +85,6 @@ class Team(QLabel):
         self.setPalette(palette)
 
         # Add text
-        # label = QLabel(team, self)
         self.setStyleSheet('color: white;')
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -100,13 +96,16 @@ class Space(QLabel):
 
 
 if __name__ == '__main__':
-    # Get config
+    # Get config and lookup table
     with open('setup/config.yml') as file:
         config = yaml.safe_load(file)
 
     use_true_results = config['visual']['use_true_results']
     checkpoint_path = config['simulate']['checkpoint_path']
     results_file_name = checkpoint_path.replace('networks/', '')[:-5]
+
+    with open('setup/display_teams.txt') as file:
+        display_names = {r.split('\t')[0]: r.split('\t')[1] for r in file.read().split('\n')}
 
     # Get results and teams
     if use_true_results:
@@ -120,8 +119,6 @@ if __name__ == '__main__':
         teams = file.read().split('\n')
 
     results.insert(0, teams)
-    print(results)
-    print(len(results))
 
     app = QApplication(sys.argv)
 
