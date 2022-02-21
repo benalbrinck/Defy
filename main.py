@@ -1,3 +1,21 @@
+# I think we want this to be where you run everything in the future...
+
+
+# https://www.youtube.com/watch?v=SelawmXHtPg
+# Modern: https://github.com/Wanderson-Magalhaes/Modern_GUI_PyDracula_PySide6_or_PyQt6
+
+# steelblue
+# darkslategray
+# slategray
+# black
+# white
+# darkred
+
+# Yeah maybe try to figure out the spacing better
+# Cus it should be in the middle of the two that go into it
+# Then have a lookup table that has better names for everyone
+
+
 import sys
 import yaml
 from PyQt6.QtCore import Qt
@@ -13,8 +31,6 @@ from PyQt6.QtGui import QPalette
 from PyQt6.QtGui import QColor
 
 
-# QtCore.Qt.AlignmentFlag
-
 class MainWindow(QMainWindow):
     def __init__(self, results) -> None:
         super().__init__()
@@ -27,10 +43,14 @@ class MainWindow(QMainWindow):
         # Left side
         for r in range(6):
             round_layout = QVBoxLayout()
-            round_layout.setContentsMargins(0, 2 ** r, 0, 2 ** r)
+            margin = 0
+            round_layout.setContentsMargins(0, margin, 0, margin)
 
             for g in range(2 ** (5 - r)):
                 round_layout.addWidget(Team(results[r][g]))
+
+                if r != 0 and g != (2 ** (5 - r) - 1):
+                    round_layout.addWidget(Space())
 
             main_layout.addLayout(round_layout)
         
@@ -46,6 +66,9 @@ class MainWindow(QMainWindow):
 
             for g in range(2 ** r):
                 round_layout.addWidget(Team(results[5 - r][g + (2 ** r)]))
+
+                if r != 5 and g != (2 ** r - 1):
+                    round_layout.addWidget(Space())
 
             main_layout.addLayout(round_layout)
 
@@ -68,6 +91,12 @@ class Team(QLabel):
         # label = QLabel(team, self)
         self.setStyleSheet('color: white;')
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+
+class Space(QLabel):
+    def __init__(self) -> None:
+        super().__init__('')
+        self.setMaximumSize(120, 40)
 
 
 if __name__ == '__main__':
