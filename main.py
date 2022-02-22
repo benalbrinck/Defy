@@ -25,7 +25,7 @@ from PyQt6.QtGui import QColor
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, results) -> None:
+    def __init__(self, results, true_results) -> None:
         super().__init__()
 
         self.setWindowTitle('Defy')
@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
             round_layout.setContentsMargins(0, margin, 0, margin)
 
             for g in range(2 ** (5 - r)):
-                round_layout.addWidget(Team(results[r][g]))
+                round_layout.addWidget(Team(results[r][g], true_results[r][g]))
 
                 if r != 0 and g != (2 ** (5 - r) - 1):
                     round_layout.addWidget(Space())
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
         
         round_layout = QVBoxLayout()
         round_layout.setContentsMargins(0, 2 ** 5, 0, 2 ** 5)
-        round_layout.addWidget(Team(results[-1][0]))
+        round_layout.addWidget(Team(results[-1][0], true_results[-1][0]))
         main_layout.addLayout(round_layout)
 
         # Right side
@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
             round_layout.setContentsMargins(0, 2 ** (6 - r), 0, 2 ** (6 - r))
 
             for g in range(2 ** r):
-                round_layout.addWidget(Team(results[5 - r][g + (2 ** r)]))
+                round_layout.addWidget(Team(results[5 - r][g + (2 ** r)], true_results[5 - r][g + (2 ** r)]))
 
                 if r != 5 and g != (2 ** r - 1):
                     round_layout.addWidget(Space())
@@ -71,7 +71,10 @@ class MainWindow(QMainWindow):
 
 
 class Team(QLabel):
-    def __init__(self, team) -> None:
+    def __init__(self, team, true_team) -> None:
+        # Check if result is correct
+        correct_result = team == true_team
+
         # Find display name
         if team in display_names:
             team = display_names[team]
@@ -81,7 +84,7 @@ class Team(QLabel):
         self.setMaximumSize(120, 40)
 
         palette = self.palette()
-        palette.setColor(QPalette.ColorRole.Window, QColor('steelblue'))
+        palette.setColor(QPalette.ColorRole.Window, QColor('steelblue' if correct_result else 'darkred'))
         self.setPalette(palette)
 
         # Add text
@@ -100,7 +103,7 @@ if __name__ == '__main__':
     with open('setup/config.yml') as file:
         config = yaml.safe_load(file)
 
-    use_true_results = config['visual']['use_true_results']
+    # use_true_results = config['visual']['use_true_results']
     checkpoint_path = config['simulate']['checkpoint_path']
     results_file_name = checkpoint_path.replace('networks/', '')[:-5]
 
@@ -108,21 +111,21 @@ if __name__ == '__main__':
         display_names = {r.split('\t')[0]: r.split('\t')[1] for r in file.read().split('\n')}
 
     # Get results and teams
-    if use_true_results:
-        with open('setup/true_results.txt') as file:
-            results = [r.split('\n') for r in file.read().split('\n\n')]
-    else:
-        with open(f'results/{results_file_name}.txt') as file:
-            results = [r.split('\n') for r in file.read().split('\n\n')]
+    with open(f'results/{results_file_name}.txt') as file:
+        results = [r.split('\n') for r in file.read().split('\n\n')]
+
+    with open('setup/true_results.txt') as file:
+        true_results = [r.split('\n') for r in file.read().split('\n\n')]
 
     with open('setup/tournament_teams.txt') as file:
         teams = file.read().split('\n')
 
     results.insert(0, teams)
+    true_results.insert(0, teams)
 
     app = QApplication(sys.argv)
 
-    window = MainWindow(results)
+    window = MainWindow(results, true_results)
     window.show()
 
     sys.exit(app.exec())
