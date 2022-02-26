@@ -114,7 +114,7 @@ class Graph(QDialog):
         self.canvas = None
         self.setLayout(self.layout)
     
-    def set_data(self, results_probs):
+    def set_data(self, results_probs, team, true_team):
         if self.canvas is not None:
             self.layout.removeWidget(self.canvas)
             plt.close()
@@ -137,7 +137,15 @@ class Graph(QDialog):
         # Plot values
         ax = self.figure.add_subplot(111)
         ax.clear()
-        ax.bar(x, top_probs, color='b', width=0.75)
+        bar_list = ax.bar(x, top_probs, color='black', width=0.75)
+
+        # Change colors based off of what was the correct pick
+        team_index = tick_names.index(team)
+        bar_list[team_index].set_color('darkred')
+
+        true_team_index = tick_names.index(true_team)
+        bar_list[true_team_index].set_color('steelblue')
+
         plt.xticks(x, tick_names, fontsize=12, rotation=45)
 
         # Set the layout
@@ -152,6 +160,12 @@ class Team(QPushButton):
         # Find display name
         if team in display_names:
             team = display_names[team]
+        
+        if true_team in display_names:
+            true_team = display_names[true_team]
+
+        self.team = team
+        self.true_team = true_team
 
         super().__init__(team)
         self.setAutoFillBackground(True)
@@ -170,7 +184,7 @@ class Team(QPushButton):
         self.pressed.connect(self.display_probs)
     
     def display_probs(self):
-        self.set_data(self.results_probs)
+        self.set_data(self.results_probs, self.team, self.true_team)
 
 
 class Space(QLabel):
@@ -222,6 +236,4 @@ if __name__ == '__main__':
 
     sys.exit(app.exec())
 
-# Move graph to its own class?
-# Recolor the plot
 # Display scores (for each round?)
