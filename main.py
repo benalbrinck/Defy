@@ -1,14 +1,3 @@
-# https://www.youtube.com/watch?v=SelawmXHtPg
-# Modern: https://github.com/Wanderson-Magalhaes/Modern_GUI_PyDracula_PySide6_or_PyQt6
-
-# steelblue
-# darkslategray
-# slategray
-# black
-# white
-# darkred
-
-
 import pickle
 import random
 import sys
@@ -35,10 +24,6 @@ from PyQt6.QtGui import QPalette
 from PyQt6.QtGui import QColor
 
 
-# Probably highlight the correct choice in bar graph/what you chose
-# So set red to what we chose, then blue to what was correct (overwrite if it is correct...)
-
-
 class MainWindow(QMainWindow):
     def __init__(self, results, true_results, results_probs) -> None:
         super().__init__()
@@ -51,14 +36,17 @@ class MainWindow(QMainWindow):
         main_widget.setLayout(layout)
 
         graph = Graph()
-        bracket = self.bracket(results, true_results, results_probs, graph.set_data)
+        bracket = Bracket(results, true_results, results_probs, graph.set_data)
 
         layout.addWidget(bracket, 2)
         layout.addWidget(graph)
 
         self.setCentralWidget(main_widget)
-    
-    def bracket(self, results, true_results, results_probs, set_data):
+
+
+class Bracket(QWidget):
+    def __init__(self, results, true_results, results_probs, set_data):
+        super().__init__()
         bracket_layout = QHBoxLayout()
 
         # Left side
@@ -115,11 +103,8 @@ class MainWindow(QMainWindow):
 
             bracket_layout.addLayout(round_layout)
 
-        widget = QWidget()
-        widget.setLayout(bracket_layout)
+        self.setLayout(bracket_layout)
         
-        return widget
-
 
 class Graph(QDialog):
     def __init__(self):
@@ -172,13 +157,12 @@ class Team(QPushButton):
         self.setAutoFillBackground(True)
         self.setMaximumSize(120, 40)
 
-        palette = self.palette()
-        palette.setColor(QPalette.ColorRole.Window, QColor('steelblue' if correct_result else 'darkred'))
-        self.setPalette(palette)
-
-        # Add text
-        self.setStyleSheet('font-size: 12px; color: white;')
-        # self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Style button and text
+        self.setStyleSheet(f'''
+            font-size: 12px;
+            background-color: {'steelblue' if correct_result else 'darkred'};
+            color: white;
+        ''')
 
         # Set up graphing probabilities
         self.results_probs = results_probs
@@ -237,3 +221,7 @@ if __name__ == '__main__':
     window.show()
 
     sys.exit(app.exec())
+
+# Move graph to its own class?
+# Recolor the plot
+# Display scores (for each round?)

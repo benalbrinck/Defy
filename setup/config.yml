@@ -4,7 +4,7 @@ global:
 simulate:
   checkpoint_path: networks/2022-02-16 092300.321909.ckpt
   use_removed_players: true
-  use_max_prob: false
+  use_max_prob: true
 train:
   auto_set_ckpt: true
   epochs: 50
