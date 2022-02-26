@@ -1,13 +1,10 @@
+import check
 import pickle
-import random
 import sys
 import yaml
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.qt_compat import QtWidgets
 from matplotlib.backends.backend_qtagg import FigureCanvas
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
@@ -16,16 +13,12 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtWidgets import QPushButton
 from PyQt6.QtWidgets import QDialog
-from PyQt6.QtWidgets import QCheckBox
 from PyQt6.QtWidgets import QVBoxLayout
 from PyQt6.QtWidgets import QHBoxLayout
-from PyQt6.QtWidgets import QGridLayout
-from PyQt6.QtGui import QPalette
-from PyQt6.QtGui import QColor
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, results, true_results, results_probs) -> None:
+    def __init__(self, results, true_results, results_probs, round_points, max_round_points) -> None:
         super().__init__()
 
         self.setWindowTitle('Defy')
@@ -36,7 +29,8 @@ class MainWindow(QMainWindow):
         main_widget.setLayout(layout)
 
         graph = Graph()
-        bracket = Bracket(results, true_results, results_probs, graph.set_data)
+        bracket = Bracket(results, true_results, results_probs, round_points,
+            max_round_points, graph.set_data)
 
         layout.addWidget(bracket, 2)
         layout.addWidget(graph)
@@ -45,15 +39,16 @@ class MainWindow(QMainWindow):
 
 
 class Bracket(QWidget):
-    def __init__(self, results, true_results, results_probs, set_data):
+    def __init__(self, results, true_results, results_probs, round_points, max_round_points, set_data):
         super().__init__()
+        main_layout = QVBoxLayout()
+
+        # Add bracket
         bracket_layout = QHBoxLayout()
 
         # Left side
         for r in range(6):
             round_layout = QVBoxLayout()
-            margin = 0
-            round_layout.setContentsMargins(0, margin, 0, margin)
 
             for g in range(2 ** (5 - r)):
                 round_layout.addWidget(
@@ -66,13 +61,13 @@ class Bracket(QWidget):
                 )
 
                 if r != 0 and g != (2 ** (5 - r) - 1):
-                    round_layout.addWidget(Space())
+                    round_layout.addWidget(Space(''))
 
+            # Add on round points
             bracket_layout.addLayout(round_layout)
         
         # Champion
         round_layout = QVBoxLayout()
-        round_layout.setContentsMargins(0, 2 ** 5, 0, 2 ** 5)
         round_layout.addWidget(
             Team(
                 results[-1][0],
@@ -86,7 +81,6 @@ class Bracket(QWidget):
         # Right side
         for r in range(6):
             round_layout = QVBoxLayout()
-            round_layout.setContentsMargins(0, 2 ** (6 - r), 0, 2 ** (6 - r))
 
             for g in range(2 ** r):
                 round_layout.addWidget(
@@ -99,11 +93,25 @@ class Bracket(QWidget):
                 )
 
                 if r != 5 and g != (2 ** r - 1):
-                    round_layout.addWidget(Space())
+                    round_layout.addWidget(Space(''))
 
             bracket_layout.addLayout(round_layout)
 
-        self.setLayout(bracket_layout)
+        main_layout.addLayout(bracket_layout)
+
+        # Add points
+        point_layout = QHBoxLayout()
+        point_layout.addWidget(Space('---/---'))
+
+        for r in range(6):
+            point_layout.addWidget(Space(f'{round_points[r]}/{max_round_points[r]}'))
+        
+        for r in range(6):
+            point_layout.addWidget(Space('---/---'))
+        
+        main_layout.addLayout(point_layout)
+        
+        self.setLayout(main_layout)
         
 
 class Graph(QDialog):
@@ -188,8 +196,11 @@ class Team(QPushButton):
 
 
 class Space(QLabel):
-    def __init__(self) -> None:
-        super().__init__('')
+    def __init__(self, text) -> None:
+        super().__init__(text)
+
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet('font-weight: bold')
         self.setMaximumSize(120, 40)
 
 
@@ -219,11 +230,15 @@ if __name__ == '__main__':
     with open(f'results/{results_file_name}_probs.txt', 'rb') as file:
         results_probs = pickle.load(file)
 
+    # Add on pre-first round
     results.insert(0, teams)
     true_results.insert(0, teams)
 
     initial_probs = [{team: 1} for team in results[0]]
     results_probs.insert(0, initial_probs)
+
+    # Get round points
+    round_points, max_round_points = check.get_round_points()
 
     # Create main window
     app = QApplication.instance()
@@ -231,9 +246,7 @@ if __name__ == '__main__':
     if not app:
         app = QApplication(sys.argv)
 
-    window = MainWindow(results, true_results, results_probs)
+    window = MainWindow(results, true_results, results_probs, round_points, max_round_points)
     window.show()
 
     sys.exit(app.exec())
-
-# Display scores (for each round?)
