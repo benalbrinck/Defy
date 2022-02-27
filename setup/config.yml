@@ -12,4 +12,5 @@ train:
   use_timestamp: false
   validation_percent: 30
 visual:
+  results_path: max_2022-02-27 121014.343284
   use_true_results: false

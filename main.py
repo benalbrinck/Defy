@@ -211,13 +211,14 @@ if __name__ == '__main__':
 
     # use_true_results = config['visual']['use_true_results']
     checkpoint_path = config['simulate']['checkpoint_path']
-    results_file_name = checkpoint_path.replace('networks/', '')[:-5]
+    results_folder_name = checkpoint_path.replace('networks/', '')[:-5]
+    results_file_name = config['visual']['results_path']
 
     with open('setup/display_teams.txt') as file:
         display_names = {r.split('\t')[0]: r.split('\t')[1] for r in file.read().split('\n')}
 
     # Get results and teams
-    with open(f'results/{results_file_name}.txt') as file:
+    with open(f'results/{results_folder_name}/{results_file_name}.txt') as file:
         results = [r.split('\n') for r in file.read().split('\n\n')]
 
     with open('setup/true_results.txt') as file:
@@ -227,7 +228,7 @@ if __name__ == '__main__':
         teams = file.read().split('\n')
     
     # Get pickled probabilities
-    with open(f'results/{results_file_name}_probs.txt', 'rb') as file:
+    with open(f'results/{results_folder_name}_probs.txt', 'rb') as file:
         results_probs = pickle.load(file)
 
     # Add on pre-first round

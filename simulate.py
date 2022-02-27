@@ -1,8 +1,10 @@
 import check
 import defy_logging
+import os
 import pickle
 import random
 import yaml
+from datetime import datetime
 
 
 if __name__ == '__main__':
@@ -13,10 +15,14 @@ if __name__ == '__main__':
 
 	use_max_prob = config['simulate']['use_max_prob']
 	checkpoint_path = config['simulate']['checkpoint_path']
-	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
+	results_folder_name = checkpoint_path.replace('networks/', '')[:-5]
+
+	timestamp = f'{datetime.now()}'.replace(':', '')
+	results_file_name = 'max_' if use_max_prob else 'random_'
+	results_file_name += timestamp
 
 	# Get pickled probabilities
-	with open(f'results/{results_file_name}_probs.txt', 'rb') as file:
+	with open(f'results/{results_folder_name}_probs.txt', 'rb') as file:
 		results_probs = pickle.load(file)
 
 	results_list = [[] for r in range(6)]
@@ -48,8 +54,17 @@ if __name__ == '__main__':
 
 	results_string = '\n\n'.join(['\n'.join(r) for r in results_list])
 
-	with open(f'results/{results_file_name}.txt', 'w') as file:
+	if not os.path.exists(f'results/{results_folder_name}'):
+		os.makedirs(f'results/{results_folder_name}')
+
+	with open(f'results/{results_folder_name}/{results_file_name}.txt', 'w') as file:
 		file.write(results_string)
+
+	# Automatically set the results path
+	config['visual']['results_path'] = results_file_name
+
+	with open('setup/config.yml', 'w') as file:
+		yaml.dump(config, file, default_flow_style=False)
 
 	logger.info('Running check...')
 	check.check_results(logger)
