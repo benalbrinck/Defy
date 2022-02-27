@@ -2,12 +2,14 @@ global:
   end_year: 2016
   start_year: 2021
 simulate:
-  checkpoint_path: networks/2022-02-16 092300.321909.ckpt
-  use_removed_players: true
+  checkpoint_path: networks/test.ckpt
   use_max_prob: true
+  use_removed_players: true
 train:
   auto_set_ckpt: true
   epochs: 50
+  name: test
+  use_timestamp: false
   validation_percent: 30
 visual:
   use_true_results: false

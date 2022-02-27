@@ -7,11 +7,6 @@ import tensorflow as tf
 from datetime import datetime
 
 
-# Parameters
-checkpoint_path = f'networks/{datetime.now()}.ckpt'.replace(':', '')  # In simulate.py, we'll get latest one unless override
-tensorboard_path = f'tensorboards/{datetime.now()}'.replace(':', '')
-
-
 def flip_data(x):
 	pivot = int(x.shape[1] / 2)
 	half_one = x[:, :pivot]
@@ -38,6 +33,17 @@ if __name__ == '__main__':
 
 	validation_percent = config['train']['validation_percent']
 	epochs = config['train']['epochs']
+
+	network_name = config['train']['name']
+	checkpoint_path = f'networks/{network_name}'
+	tensorboard_path = f'tensorboards/{network_name}'
+
+	if config['train']['use_timestamp']:
+		timestamp = f'{datetime.now()}'.replace(':', '')
+		checkpoint_path += f'_{timestamp}'
+		tensorboard_path += f'_{timestamp}'
+	
+	checkpoint_path += '.ckpt'
 
 	if config['train']['auto_set_ckpt']:
 		# Automatically set the checkpoint path
