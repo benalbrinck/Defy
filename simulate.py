@@ -15,14 +15,16 @@ if __name__ == '__main__':
 
 	use_max_prob = config['simulate']['use_max_prob']
 	checkpoint_path = config['simulate']['checkpoint_path']
-	results_folder_name = checkpoint_path.replace('networks/', '')[:-5]
+	results_folder_name = checkpoint_path.replace('networks/', '')
+	use_epoch = config['simulate']['use_epoch']
 
 	timestamp = f'{datetime.now()}'.replace(':', '')
 	results_file_name = 'max_' if use_max_prob else 'random_'
+	results_file_name += f'{use_epoch:04d}_'
 	results_file_name += timestamp
 
 	# Get pickled probabilities
-	with open(f'results/{results_folder_name}_probs.txt', 'rb') as file:
+	with open(f'results/{results_folder_name}/{use_epoch:04d}_probs.txt', 'rb') as file:
 		results_probs = pickle.load(file)
 
 	results_list = [[] for r in range(6)]

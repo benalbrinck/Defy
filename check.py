@@ -1,18 +1,42 @@
 import defy_logging
+import os
 import yaml
 
 
-def check_results(logger):
-	# Get config
+def get_predicted_results():
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
 
+	use_max_prob = config['simulate']['use_max_prob']
 	checkpoint_path = config['simulate']['checkpoint_path']
-	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
+	results_folder_name = checkpoint_path.replace('networks/', '')
+	use_epoch = config['simulate']['use_epoch']
 
-	# Get true and simulated results
-	with open(f'results/{results_file_name}.txt') as file:
+	starts_with = 'max_' if use_max_prob else 'random_'
+	starts_with += f'{use_epoch:04d}_'
+
+	# Get all file names in folder and find which one matches starts_with
+	results_file_name = ''
+
+	for file_name in os.listdir(f'results/{results_folder_name}'):
+		if starts_with in file_name:
+			results_file_name = file_name + ''
+			break
+	
+	if results_file_name == '':
+		logger.info('File not found')
+		return
+
+	# Get predicted_results
+	with open(f'results/{results_folder_name}/{results_file_name}') as file:
 		predicted_results = [r.split('\n') for r in file.read().split('\n\n')]
+
+	return predicted_results
+
+
+def check_results(logger):
+	# Get true and simulated results
+	predicted_results = get_predicted_results()
 
 	with open('setup/true_results.txt') as file:
 		true_results = [r.split('\n') for r in file.read().split('\n\n')]
@@ -48,8 +72,7 @@ def get_round_points():
 	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
 
 	# Get true and simulated results
-	with open(f'results/{results_file_name}.txt') as file:
-		predicted_results = [r.split('\n') for r in file.read().split('\n\n')]
+	predicted_results = get_predicted_results()
 
 	with open('setup/true_results.txt') as file:
 		true_results = [r.split('\n') for r in file.read().split('\n\n')]
@@ -70,7 +93,6 @@ def get_round_points():
 			max_round_points[-1] += (2 ** r) * 10
 	
 	return round_points, max_round_points
-
 
 if __name__ == '__main__':
 	logger = defy_logging.get_logger()

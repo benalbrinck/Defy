@@ -1,7 +1,7 @@
-import collections
 import defy_logging
 import defy_model
 import json
+import os
 import pickle
 import yaml
 import numpy as np
@@ -115,8 +115,11 @@ if __name__ == '__main__':
 		config = yaml.safe_load(file)
 
 	year = config['global']['start_year']
-	checkpoint_path = config['simulate']['checkpoint_path']
 	use_removed_players = config['simulate']['use_removed_players']
+
+	checkpoint_path = config['simulate']['checkpoint_path']
+	use_epoch = config['simulate']['use_epoch']
+	checkpoint_path += '/{epoch:04d}.hdf5'.format(epoch=use_epoch)
 
 	if not use_removed_players:
 		removed_players = []
@@ -173,6 +176,9 @@ if __name__ == '__main__':
 
 	logger.info(f'Expected score: {expected_score}')
 	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
+
+	if not os.path.exists(f'results/{results_file_name[:-4]}'):
+		os.makedirs(f'results/{results_file_name[:-4]}')
 
 	with open(f'results/{results_file_name}_probs.txt', 'wb') as file:
 		pickle.dump(results_probs, file)

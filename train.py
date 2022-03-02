@@ -1,5 +1,6 @@
 import defy_logging
 import defy_model
+import os
 import random
 import yaml
 import numpy as np
@@ -13,6 +14,29 @@ def flip_data(x):
 	half_two = x[:, pivot:]
 
 	return np.concatenate((half_two, half_one), axis=1)
+
+
+def calculate_temperature(epoch, logs={}):
+	global predicted_outputs
+	global temperature
+
+	# Calculate temperature value
+	predicted_outputs = model(validation_inputs)
+
+	temperature = tf.Variable(initial_value=1.0, trainable=True, dtype=tf.float32)
+	optimizer = tf.optimizers.Adam(learning_rate=0.01)
+
+	for i in range(300):
+		opts = optimizer.minimize(temperature_loss, var_list=[temperature])
+	
+	epoch_message = ' - '.join('{}: {:0.4f}'.format(k, logs[k]) for k in logs)
+	logger.info(f'Epoch {epoch + 1}: {epoch_message}')
+	logger.info(f'Temperature Value: {temperature.numpy()}')
+
+	file_name = checkpoint_path[:-5].format(epoch=epoch + 1)
+
+	with open(f'{file_name}.temp', 'w') as file:
+		file.write(str(temperature.numpy()))
 
 
 def temperature_loss():
@@ -42,8 +66,6 @@ if __name__ == '__main__':
 		timestamp = f'{datetime.now()}'.replace(':', '')
 		checkpoint_path += f'_{timestamp}'
 		tensorboard_path += f'_{timestamp}'
-	
-	checkpoint_path += '.ckpt'
 
 	if config['train']['auto_set_ckpt']:
 		# Automatically set the checkpoint path
@@ -51,6 +73,8 @@ if __name__ == '__main__':
 
 		with open('setup/config.yml', 'w') as file:
 			yaml.dump(config, file, default_flow_style=False)
+	
+	checkpoint_path += '/{epoch:04d}.hdf5'
 
 	# Get training data
 	logger.info('Getting training data...')
@@ -97,19 +121,22 @@ if __name__ == '__main__':
 	validation_inputs = np.concatenate((validation_inputs, flipped_validation_inputs), axis=0)
 	validation_outputs = np.concatenate((validation_outputs, flipped_validation_outputs), axis=0)
 
-	# Create network
+	# Create callbacks
 	tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_path)
+	temp_callback = tf.keras.callbacks.LambdaCallback(on_epoch_end=calculate_temperature)
 
-	logger.info('Creating network...')
-	model = defy_model.get_model()
+	if not os.path.exists(f'networks/{network_name}'):
+		os.makedirs(f'networks/{network_name}')
 
-	# Create checkpoint
-	# Have to figure out how to save the temp
-	checkpoint = tf.keras.callbacks.ModelCheckpoint(
+	checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
 		filepath=checkpoint_path,
 		save_weights_only=True,
 		verbose=1
 	)
+
+	# Create network
+	logger.info('Creating network...')
+	model = defy_model.get_model()
 
 	# Train model, saving between x epochs
 	logger.info(f'Training network for {epochs} epochs...')
@@ -118,7 +145,7 @@ if __name__ == '__main__':
 		training_outputs,
 		batch_size=32,
 		epochs=epochs, 
-		callbacks=[checkpoint, tensorboard_callback],
+		callbacks=[checkpoint_callback, temp_callback, tensorboard_callback],
 		validation_data=(validation_inputs, validation_outputs),
 		shuffle=True
 	)
@@ -126,20 +153,3 @@ if __name__ == '__main__':
 	# Check accuracy
 	validation_accuracy = model.evaluate(validation_inputs, validation_outputs, verbose=2)
 	logger.info(f'Validation Loss, Accuracy: {validation_accuracy}')
-
-	# Calculate temperature value
-	logger.info('Getting temperature value...')
-	predicted_outputs = model(validation_inputs)
-
-	temperature = tf.Variable(initial_value=1.0, trainable=True, dtype=tf.float32)
-	optimizer = tf.optimizers.Adam(learning_rate=0.01)
-
-	for i in range(300):
-		opts = optimizer.minimize(temperature_loss, var_list=[temperature])
-	
-	logger.info(f'Temperature Value: {temperature.numpy()}')
-	logger.info('Saving value...')
-	file_name = checkpoint_path[:-5]
-
-	with open(f'{file_name}.temp', 'w') as file:
-		file.write(str(temperature.numpy()))
