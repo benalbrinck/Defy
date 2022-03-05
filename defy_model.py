@@ -3,9 +3,6 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 
 def get_model(simulate=False, temperature=1):
-	with open('setup/config.yml') as file:
-		config = yaml.safe_load(file)
-
 	model = tf.keras.models.Sequential([
 		tf.keras.layers.Dense(128, input_shape=(1168,)),
 		tf.keras.layers.GaussianNoise(0.1),

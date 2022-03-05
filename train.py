@@ -8,6 +8,28 @@ import tensorflow as tf
 from datetime import datetime
 
 
+def get_data(end_year, year):
+	inputs = []
+	outputs = []
+
+	for y in range(end_year, year + 1):
+		npz_file = np.load(f'data/data_{y}.npz', allow_pickle=True)
+
+		next_inputs = np.nan_to_num(npz_file['inputs'].astype('float32'))
+		next_outputs = np.nan_to_num(npz_file['outputs_results'].astype('float32'))
+
+		input_norm = np.linalg.norm(next_inputs, axis=0)
+		next_inputs = np.divide(next_inputs, input_norm, out=np.zeros_like(next_inputs), where=input_norm!=0)
+		
+		inputs.append(next_inputs)
+		outputs.append(next_outputs)
+	
+	input_array = np.concatenate(inputs, axis=0)
+	output_array = np.concatenate(outputs, axis=0)
+
+	return input_array, output_array
+
+
 def flip_data(x):
 	pivot = int(x.shape[1] / 2)
 	half_one = x[:, :pivot]
@@ -78,23 +100,7 @@ if __name__ == '__main__':
 
 	# Get training data
 	logger.info('Getting training data...')
-	inputs = []
-	outputs = []
-
-	for y in range(end_year, year + 1):
-		npz_file = np.load(f'data/data_{y}.npz', allow_pickle=True)
-
-		next_inputs = np.nan_to_num(npz_file['inputs'].astype('float32'))
-		next_outputs = np.nan_to_num(npz_file['outputs_results'].astype('float32'))
-
-		input_norm = np.linalg.norm(next_inputs, axis=0)
-		next_inputs = np.divide(next_inputs, input_norm, out=np.zeros_like(next_inputs), where=input_norm!=0)
-		
-		inputs.append(next_inputs)
-		outputs.append(next_outputs)
-	
-	input_array = np.concatenate(inputs, axis=0)
-	output_array = np.concatenate(outputs, axis=0)
+	input_array, output_array = get_data()
 
 	logger.info(f'{input_array.shape[0]} games retrieved from {end_year} to {year}')
 
