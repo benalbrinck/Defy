@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     # Testing values
     sizes = [0, 8, 16, 32, 64, 128, 256, 512]
-    dropouts = [0.1, 0.5, 0.6, 0.7, 0.8]
+    dropouts = [0, 0.1, 0.5, 0.6, 0.7, 0.8]
     noise = [0, 0.1]
     rates = [10 ** -(i + 1) for i in range(5)]
     momentums = [0, 0.9]
