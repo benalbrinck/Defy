@@ -1,11 +1,10 @@
-from random import Random
-from sched import scheduler
 import defy_logging
 import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
 import train
 import yaml
+from datetime import datetime
 from sklearn.model_selection import RandomizedSearchCV
 from keras.wrappers.scikit_learn import KerasClassifier
 
@@ -68,7 +67,7 @@ if __name__ == '__main__':
     # Parameters
     epochs = 75
     batch_size = 32
-    check_amount = 10
+    check_amount = 1
     cv = 10
 
     # Testing values
@@ -108,12 +107,15 @@ if __name__ == '__main__':
     stds = grid_result.cv_results_['std_test_score']
     params = grid_result.cv_results_['params']
 
+    param_keys = '\t'.join(params[0].keys())
+    text = f'mean\tstdev\t{param_keys}'
+
     for mean, stdev, param in zip(means, stds, params):
         logger.info(f'mean={mean:.4}, std={stdev:.4} using {param}')
+        param_values = '\t'.join([str(val) for val in param.values()])
+        text += f'\n{mean:.4}\t{stdev:.4}\t{param_values}'
+    
+    filename = (f'tuning/{datetime.now()}.csv').replace(':', '')
 
-
-"""
-I wonder if I can grab all this data and kinda fit the parameters to the accuracy to predict the best structure
-
-And maybe have it pick best on average and max-ish accuracy (mean + stdev)
-"""
+    with open(filename, 'w') as file:
+        file.write(text)
