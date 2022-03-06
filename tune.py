@@ -1,4 +1,5 @@
 from random import Random
+from sched import scheduler
 import defy_logging
 import numpy as np
 import tensorflow as tf
@@ -11,7 +12,10 @@ from keras.wrappers.scikit_learn import KerasClassifier
 
 def get_model(first_size, second_size, third_size,
                 first_dropout, second_dropout, third_dropout,
-                first_noise, second_noise, third_noise):
+                first_noise, second_noise, third_noise,
+                learning_rate, use_lr_schedule,
+                weight_decay, use_wd_schedule,
+                optimizer, momentum):
     model = tf.keras.models.Sequential()
 
     # Layers
@@ -34,18 +38,25 @@ def get_model(first_size, second_size, third_size,
     
     model.add(tf.keras.layers.Dense(2))
 
+    # Learning rate and weight decay
+    if use_lr_schedule:
+        learning_rate = tf.optimizers.schedules.InverseTimeDecay(learning_rate, 1, 1e-3)
+
+    if use_wd_schedule:
+        weight_decay = tf.optimizers.schedules.InverseTimeDecay(weight_decay, 1, 1e-3)
+
     # Optimizers
-    step = tf.Variable(0, trainable=False)
-    schedule = tf.optimizers.schedules.PiecewiseConstantDecay([10000, 15000], [1e-0, 1e-1, 1e-2])
-
-    learning_rate = 1e-1 * schedule(step)
-    weight_decay = lambda: 1e-4 * schedule(step)
-
-    # optimizer = tfa.optimizers.AdamW(weight_decay=1e-4)
-    optimizer = tfa.optimizers.SGDW(learning_rate=learning_rate, weight_decay=weight_decay, momentum=0.9)
+    optimizers = {
+        'adam': tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        'sgd': tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=momentum),
+        'adamw': tfa.optimizers.AdamW(learning_rate=learning_rate, weight_decay=weight_decay),
+        'sgdw': tfa.optimizers.SGDW(learning_rate=learning_rate, weight_decay=weight_decay, momentum=momentum),
+        'rmsprop': tf.keras.optimizers.RMSprop(learning_rate=learning_rate, momentum=momentum),
+        'lazyadam': tfa.optimizers.LazyAdam(learning_rate=learning_rate)
+    }
 
     loss_function = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
-    model.compile(optimizer=optimizer, loss=loss_function, metrics=['accuracy'])
+    model.compile(optimizer=optimizers[optimizer], loss=loss_function, metrics=['accuracy'])
 
     return model
 
@@ -64,17 +75,24 @@ if __name__ == '__main__':
     # Parameters
     epochs = 75
     batch_size = 32
-    check_amount = 30
+    check_amount = 10
+    cv = 10
 
     # Testing values
     sizes = [0, 8, 16, 32, 64, 128, 256, 512]
     dropouts = [0.1, 0.5, 0.6, 0.7, 0.8]
     noise = [0, 0.1]
+    rates = [10 ** -(i + 1) for i in range(5)]
+    momentums = [0, 0.9]
+    optimizers = ['adam', 'sgd', 'adamw', 'sgdw', 'rmsprop', 'lazyadam']
 
     param_grid = dict(
         first_size=sizes[1:], second_size=sizes, third_size=sizes,
         first_dropout=dropouts, second_dropout=dropouts, third_dropout=dropouts,
-        first_noise=noise, second_noise=noise, third_noise=noise
+        first_noise=noise, second_noise=noise, third_noise=noise,
+        learning_rate=rates, use_lr_schedule=[True, False],
+        weight_decay=rates, use_wd_schedule=[True, False],
+        optimizer=optimizers, momentum=momentums
     )
 
     # Search
@@ -82,11 +100,12 @@ if __name__ == '__main__':
     grid = RandomizedSearchCV(
         estimator=model_cv,
         param_distributions=param_grid,
-        cv=10,
+        cv=cv,
         n_iter=check_amount
     )
 
     logger.info('Starting search...')
+    logger.info(f'Epochs: {epochs}, Batch size: {batch_size}, Check amount: {check_amount}, Cv: {cv}')
     grid_result = grid.fit(input_array, output_array)
 
     # Results
@@ -99,10 +118,9 @@ if __name__ == '__main__':
     for mean, stdev, param in zip(means, stds, params):
         logger.info(f'mean={mean:.4}, std={stdev:.4} using {param}')
 
+
 """
-/ Size and # of layers
-/ Dropout frequency
-/ Noise frequency
-- Optimizers
-- Learning rates/schedulers
+I wonder if I can grab all this data and kinda fit the parameters to the accuracy to predict the best structure
+
+And maybe have it pick best on average and max-ish accuracy (mean + stdev)
 """
