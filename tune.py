@@ -10,9 +10,9 @@ from sklearn.model_selection import RandomizedSearchCV
 from keras.wrappers.scikit_learn import KerasClassifier
 
 
-def get_model(first_size, second_size, third_size,
-                first_dropout, second_dropout, third_dropout,
-                first_noise, second_noise, third_noise,
+def get_model(first_size, second_size,
+                first_dropout, second_dropout,
+                first_noise, second_noise,
                 learning_rate, use_lr_schedule,
                 weight_decay, use_wd_schedule,
                 optimizer, momentum):
@@ -24,17 +24,10 @@ def get_model(first_size, second_size, third_size,
     model.add(tf.keras.layers.LeakyReLU())
     model.add(tf.keras.layers.Dropout(first_dropout))
 
-    if second_size != 0:
-        model.add(tf.keras.layers.Dense(second_size))
-        model.add(tf.keras.layers.GaussianNoise(second_noise))
-        model.add(tf.keras.layers.LeakyReLU())
-        model.add(tf.keras.layers.Dropout(second_dropout))
-    
-    if third_size != 0:
-        model.add(tf.keras.layers.Dense(third_size))
-        model.add(tf.keras.layers.GaussianNoise(third_noise))
-        model.add(tf.keras.layers.LeakyReLU())
-        model.add(tf.keras.layers.Dropout(third_dropout))
+    model.add(tf.keras.layers.Dense(second_size))
+    model.add(tf.keras.layers.GaussianNoise(second_noise))
+    model.add(tf.keras.layers.LeakyReLU())
+    model.add(tf.keras.layers.Dropout(second_dropout))
     
     model.add(tf.keras.layers.Dense(2))
 
@@ -79,7 +72,7 @@ if __name__ == '__main__':
     cv = 10
 
     # Testing values
-    sizes = [0, 8, 16, 32, 64, 128, 256, 512]
+    sizes = [8, 16, 32, 64, 128, 256, 512]
     dropouts = [0, 0.1, 0.5, 0.6, 0.7, 0.8]
     noise = [0, 0.1]
     rates = [10 ** -(i + 1) for i in range(5)]
@@ -87,9 +80,9 @@ if __name__ == '__main__':
     optimizers = ['adam', 'sgd', 'adamw', 'sgdw', 'rmsprop', 'lazyadam']
 
     param_grid = dict(
-        first_size=sizes[1:], second_size=sizes, third_size=sizes,
-        first_dropout=dropouts, second_dropout=dropouts, third_dropout=dropouts,
-        first_noise=noise, second_noise=noise, third_noise=noise,
+        first_size=sizes, second_size=sizes,
+        first_dropout=dropouts, second_dropout=dropouts,
+        first_noise=noise, second_noise=noise,
         learning_rate=rates, use_lr_schedule=[True, False],
         weight_decay=rates, use_wd_schedule=[True, False],
         optimizer=optimizers, momentum=momentums
