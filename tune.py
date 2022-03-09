@@ -3,8 +3,8 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
 import train
+import os
 import yaml
-from datetime import datetime
 from sklearn.model_selection import RandomizedSearchCV
 from keras.wrappers.scikit_learn import KerasClassifier
 
@@ -53,6 +53,41 @@ def get_model(first_size, second_size,
     return model
 
 
+def test_models(model, params, cv=10, number_models=1):
+    grid = RandomizedSearchCV(
+        estimator=model,
+        param_distributions=params,
+        cv=cv,
+        n_iter=number_models
+    )
+    
+    grid_result = grid.fit(input_array, output_array)
+    return grid_result
+
+
+def output_results(grid_result):
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+
+    param_keys = '\t'.join(params[0].keys())
+
+    # Check if file exists
+    if os.path.exists('tuning.tsv'):
+        with open('tuning.tsv') as file:
+            text = file.read()
+    else:
+        text = f'mean\tstdev\t{param_keys}'
+
+    for mean, stdev, param in zip(means, stds, params):
+        logger.info(f'mean={mean:.4}, std={stdev:.4} using {param}')
+        param_values = '\t'.join([str(val) for val in param.values()])
+        text += f'\n{mean:.4}\t{stdev:.4}\t{param_values}'
+
+    with open('tuning.tsv', 'w') as file:
+        file.write(text)
+
+
 if __name__ == '__main__':
     logger = defy_logging.get_logger()
 
@@ -67,8 +102,9 @@ if __name__ == '__main__':
     # Parameters
     epochs = 75
     batch_size = 32
-    check_amount = 1
+    check_rounds = 1
     cv = 10
+    number_models = 1
 
     # Testing values
     sizes = [8, 16, 32, 64, 128, 256, 512]
@@ -88,34 +124,11 @@ if __name__ == '__main__':
     )
 
     # Search
-    model_cv = KerasClassifier(build_fn=get_model, verbose=1)
-    grid = RandomizedSearchCV(
-        estimator=model_cv,
-        param_distributions=param_grid,
-        cv=cv,
-        n_iter=check_amount
-    )
-
     logger.info('Starting search...')
-    logger.info(f'Epochs: {epochs}, Batch size: {batch_size}, Check amount: {check_amount}, Cv: {cv}')
-    grid_result = grid.fit(input_array, output_array)
+    logger.info(f'Epochs: {epochs}, Batch size: {batch_size}, Check rounds: {check_rounds}, Cv: {cv}')
 
-    # Results
-    logger.info(f'Best Accuracy for {grid_result.best_score_:.4} using {grid_result.best_params_}')
+    model_cv = KerasClassifier(build_fn=get_model, verbose=1)
 
-    means = grid_result.cv_results_['mean_test_score']
-    stds = grid_result.cv_results_['std_test_score']
-    params = grid_result.cv_results_['params']
-
-    param_keys = '\t'.join(params[0].keys())
-    text = f'mean\tstdev\t{param_keys}'
-
-    for mean, stdev, param in zip(means, stds, params):
-        logger.info(f'mean={mean:.4}, std={stdev:.4} using {param}')
-        param_values = '\t'.join([str(val) for val in param.values()])
-        text += f'\n{mean:.4}\t{stdev:.4}\t{param_values}'
-    
-    filename = (f'tuning/{datetime.now()}.csv').replace(':', '')
-
-    with open(filename, 'w') as file:
-        file.write(text)
+    for i in range(check_rounds):
+        grid_result = test_models(model_cv, param_grid, cv, number_models)
+        output_results(grid_result)
