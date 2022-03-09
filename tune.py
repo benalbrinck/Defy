@@ -102,7 +102,7 @@ if __name__ == '__main__':
     # Parameters
     epochs = 75
     batch_size = 32
-    check_rounds = 1
+    check_rounds = 10000
     cv = 10
     number_models = 1
 
