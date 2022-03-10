@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
 	# Get training data
 	logger.info('Getting training data...')
-	input_array, output_array = get_data()
+	input_array, output_array = get_data(end_year, year)
 
 	logger.info(f'{input_array.shape[0]} games retrieved from {end_year} to {year}')
 
