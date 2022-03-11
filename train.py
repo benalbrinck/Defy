@@ -14,9 +14,6 @@ def get_npz(path):
 	inputs = np.nan_to_num(npz_file['inputs'].astype('float32'))
 	outputs = np.nan_to_num(npz_file['outputs_results'].astype('float32'))
 
-	input_norm = np.linalg.norm(inputs, axis=0)
-	inputs = np.divide(inputs, input_norm, out=np.zeros_like(inputs), where=input_norm!=0)
-
 	return inputs, outputs
 
 
@@ -25,19 +22,30 @@ def get_data(end_year, year):
 	outputs = []
 
 	for y in range(end_year, year + 1):
+		next_inputs = 0
+
 		if os.path.exists(f'data/data_{y}.npz'):
 			# Regular season
 			next_inputs, next_outputs = get_npz(f'data/data_{y}.npz')
-			
-			inputs.append(next_inputs)
-			outputs.append(next_outputs)
 
 		# NCAA tournament
 		if y != year and os.path.exists(f'data/data_{y}_ncaa.npz'):
-			next_inputs, next_outputs = get_npz(f'data/data_{y}_ncaa.npz')
+			next_inputs_ncaa, next_outputs_ncaa = get_npz(f'data/data_{y}_ncaa.npz')
 			
-			inputs.append(next_inputs)
-			outputs.append(next_outputs)
+			if type(next_inputs) == int:
+				# No regular season games
+				next_inputs = next_inputs_ncaa
+				next_outputs = next_outputs_ncaa
+			else:
+				# Concatenate to regular season
+				next_inputs = np.concatenate((next_inputs, next_inputs_ncaa), axis=0)
+				next_outputs = np.concatenate((next_outputs, next_outputs_ncaa), axis=0)
+		
+		input_norm = np.linalg.norm(next_inputs, axis=0)
+		next_inputs = np.divide(next_inputs, input_norm, out=np.zeros_like(next_inputs), where=input_norm!=0)
+
+		inputs.append(next_inputs)
+		outputs.append(next_outputs)
 	
 	input_array = np.concatenate(inputs, axis=0)
 	output_array = np.concatenate(outputs, axis=0)
