@@ -48,16 +48,19 @@ if __name__ == '__main__':
     year = config['global']['start_year']
     end_year = config['global']['end_year']
 
-    # Network input and output variables
-    inputs = []
-    outputs_results = []
-
     with open('setup/conferences.txt') as file:
         conference_names = file.read().split('\n')
 
     # Get data
     while True:
         logger.info(year)
+
+        # Network input and output variables
+        inputs = []
+        outputs_results = []
+
+        inputs_ncaa = []
+        outputs_results_ncaa = []
 
         # Get all conference teams and team data
         if os.path.isfile(f'data/conferences_{year}.json'):
@@ -72,7 +75,7 @@ if __name__ == '__main__':
             with open(f'data/conferences_{year}.json', 'w') as file:
                 json.dump(conference_teams, file)
 
-        if os.path.isfile(f'data/data_{year}.npz'):
+        if os.path.isfile(f'data/data_{year}.npz') and os.path.isfile(f'data/data_{year}_ncaa.npz'):
             logger.info('\tYear data exists, skipping...')
 
             # Check if this is the last year
@@ -119,11 +122,7 @@ if __name__ == '__main__':
                     logger.info(f'\t\t\tSkipping {game.datetime}')
                     continue
 
-                if year == 2021 and game.type.lower() == 'ncaa':
-                    # For testing purposes, we won't include March Madness games of 2021
-                    continue
-
-                logger.info(f'\t\t\t{game.datetime}')
+                logger.info(f'\t\t\t{game.datetime}, {game.type}')
                 game_index.append(game.datetime)
 
                 win_index = 0 if game.result == 'Win' else 1
@@ -135,7 +134,12 @@ if __name__ == '__main__':
                     logger.info(f'\t\t\t\tSkipping, opponent not in teams')
                     continue
 
-                boxscore = game.boxscore
+                try:
+                    boxscore = game.boxscore
+                except Exception as e:
+                    logger.info('\t\t\t\tSkipping, can\'t get boxscore')
+                    continue
+
                 home_players = [list(p.dataframe.index)[0] for p in boxscore.home_players]
                 away_players = [list(p.dataframe.index)[0] for p in boxscore.away_players]
 
@@ -176,8 +180,15 @@ if __name__ == '__main__':
                 game_output = np.zeros((1, 2))
                 game_output[0][win_index] = 1
 
-                inputs.append(game_input)
-                outputs_results.append(game_output)
+                if game.type == None or game.type.lower() != 'ncaa':
+                    # Regular season games
+                    inputs.append(game_input)
+                    outputs_results.append(game_output)
+                else:
+                    # NCAA tournament games
+                    inputs_ncaa.append(game_input)
+                    outputs_results_ncaa.append(game_output)
+                
                 sleep(0.5)
             sleep(1)
 
@@ -185,6 +196,12 @@ if __name__ == '__main__':
         year_outputs = np.concatenate(outputs_results, axis=0)
 
         np.savez(f'data/data_{year}.npz', inputs=year_inputs, outputs_results=year_outputs)
+
+        if len(inputs_ncaa) != 0:
+            year_inputs_ncaa = np.concatenate(inputs_ncaa, axis=0)
+            year_outputs_ncaa = np.concatenate(outputs_results_ncaa, axis=0)
+
+            np.savez(f'data/data_{year}_ncaa.npz', inputs=year_inputs_ncaa, outputs_results=year_outputs_ncaa)
 
         # Check if this is the last year
         if year == end_year:
