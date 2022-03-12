@@ -3,6 +3,7 @@ import defy_model
 import json
 import os
 import pickle
+import train
 import yaml
 import numpy as np
 from sportsreference.ncaab.conferences import Conference
@@ -46,16 +47,17 @@ def simulate_game(team1, team2):
 	# Concatenate stats, fix stats, normalize, and put it through the model
 	game_input = np.concatenate((team1_stats, team1_conference, team2_stats, team2_conference), axis=1)
 	game_input = np.nan_to_num(game_input.astype('float32'))
-	normal_game_input = np.divide(game_input, input_norm, out=np.zeros_like(game_input), where=input_norm!=0)
 
-	# You can also add in flipped data
+	normal_game_input = np.divide(game_input, input_norm, out=np.zeros_like(game_input), where=input_norm!=0)
+	normal_game_input_flip = train.flip_data(normal_game_input)
 
 	# Get probabilities
 	result = model(normal_game_input).numpy()
+	result_flip = model(normal_game_input_flip).numpy()
 
 	return {
-		team1: result[0][0],
-		team2: result[0][1]
+		team1: (result[0][0] + result_flip[0][1]) / 2,
+		team2: (result[0][1] + result_flip[0][0]) / 2
 	}
 
 
