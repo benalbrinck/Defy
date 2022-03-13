@@ -110,26 +110,28 @@ def display_results(round_prob):
 
 if __name__ == '__main__':
 	logger = defy_logging.get_logger()
-
-	with open('setup/conferences.txt') as file:
-		conference_names = file.read().split('\n')
 	
-	with open('setup/removed_players.txt') as file:
-		removed_players = file.read().split('\n')
-	
-	with open('setup/true_results.txt') as file:
-		true_results = [r.split('\n') for r in file.read().split('\n\n')]
-
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
 
 	year = config['global']['start_year']
+	check_year = config['global']['check_year']
+
 	use_removed_players = config['simulate']['use_removed_players']
 	lpf = config['simulate']['lpf_score']
 
 	checkpoint_path = config['simulate']['checkpoint_path']
 	use_epoch = config['simulate']['use_epoch']
 	checkpoint_path += '/{epoch:04d}.hdf5'.format(epoch=use_epoch)
+	
+	with open(f'setup/conferences/{check_year}.txt') as file:
+		conference_names = file.read().split('\n')
+	
+	with open(f'setup/removed_players/{check_year}.txt') as file:
+		removed_players = file.read().split('\n')
+	
+	with open(f'setup/true_results/{check_year}.txt') as file:
+		true_results = [r.split('\n') for r in file.read().split('\n\n')]
 
 	if not use_removed_players:
 		removed_players = []

@@ -210,22 +210,22 @@ if __name__ == '__main__':
     with open('setup/config.yml') as file:
         config = yaml.safe_load(file)
 
-    # use_true_results = config['visual']['use_true_results']
+    check_year = config['global']['check_year']
     checkpoint_path = config['simulate']['checkpoint_path']
     results_folder_name = checkpoint_path.replace('networks/', '')
     results_file_name = config['visual']['results_path']
     use_epoch = config['simulate']['use_epoch']
 
-    with open('setup/display_teams.txt') as file:
+    with open(f'setup/display_teams/{check_year}.txt') as file:
         display_names = {r.split('\t')[0]: r.split('\t')[1] for r in file.read().split('\n')}
 
     # Get results and teams
     results = check.get_predicted_results()
 
-    with open('setup/true_results.txt') as file:
+    with open(f'setup/true_results/{check_year}.txt') as file:
         true_results = [r.split('\n') for r in file.read().split('\n\n')]
 
-    with open('setup/tournament_teams.txt') as file:
+    with open(f'setup/tournament_teams/{check_year}.txt') as file:
         teams = file.read().split('\n')
     
     # Get pickled probabilities

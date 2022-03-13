@@ -35,10 +35,16 @@ def get_predicted_results():
 
 
 def check_results(logger):
+	# Get config
+	with open('setup/config.yml') as file:
+		config = yaml.safe_load(file)
+
+	check_year = config['global']['check_year']
+
 	# Get true and simulated results
 	predicted_results = get_predicted_results()
 
-	with open('setup/true_results.txt') as file:
+	with open(f'setup/true_results/{check_year}.txt') as file:
 		true_results = [r.split('\n') for r in file.read().split('\n\n')]
 
 	# Give point total + show them both side by side w/ whether or not right there
@@ -68,13 +74,12 @@ def get_round_points():
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
 
-	checkpoint_path = config['simulate']['checkpoint_path']
-	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
+	check_year = config['global']['check_year']
 
 	# Get true and simulated results
 	predicted_results = get_predicted_results()
 
-	with open('setup/true_results.txt') as file:
+	with open(f'setup/true_results/{check_year}.txt') as file:
 		true_results = [r.split('\n') for r in file.read().split('\n\n')]
 
 	# Get point total for each round

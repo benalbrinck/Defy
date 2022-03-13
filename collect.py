@@ -47,8 +47,9 @@ if __name__ == '__main__':
     
     year = config['global']['start_year']
     end_year = config['global']['end_year']
+    check_year = config['global']['check_year']
 
-    with open('setup/conferences.txt') as file:
+    with open(f'setup/conferences/{check_year}.txt') as file:
         conference_names = file.read().split('\n')
 
     # Get data
