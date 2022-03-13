@@ -1,0 +1,20 @@
+global:
+  check_results: true
+  check_year: 2021
+  end_year: 2015
+  start_year: 2021
+simulate:
+  checkpoint_path: networks/2015_test
+  lpf_score: 0
+  lpf_simulate: 0.2
+  use_epoch: 102
+  use_max_prob: false
+  use_removed_players: true
+train:
+  auto_set_ckpt: true
+  epochs: 1000
+  name: 2015_test
+  use_timestamp: false
+  validation_percent: 30
+visual:
+  results_path: random_0102_2022-03-13 104606.413640

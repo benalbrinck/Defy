@@ -1,0 +1,64 @@
+gonzaga	Gonzaga
+norfolk-state	Norfolk State
+oklahoma	Oklahoma
+missouri	Missouri
+creighton	Creighton
+california-santa-barbara	UC Santa Barbara
+virginia	Virginia
+ohio	Ohio
+southern-california	USC
+drake	Drake
+kansas	Kansas
+eastern-washington	Eastern washington
+oregon	Oregon
+virginia-commonwealth	VCU
+iowa	Iowa
+grand-canyon	Grand Canyon
+michigan	Michigan
+texas-southern	Texas Southern
+louisiana-state	LSU
+st-bonaventure	St. Bonaventure
+colorado	Colorado
+georgetown	Georgetown
+florida-state	Florida State
+north-carolina-greensboro	UNC Greensboro
+brigham-young	BYU
+ucla	UCLA
+texas	Texas
+abilene-christian	Abilene Christian
+connecticut	UConn
+maryland	Maryland
+alabama	Alabama
+iona	Iona
+baylor	Baylor
+hartford	Hartford
+north-carolina	North Carolina
+wisconsin	Wisconsin
+villanova	Villanova
+winthrop	Winthrop
+purdue	Purdue
+north-texas	North Texas
+texas-tech	Texas Tech
+utah-state	Utah State
+arkansas	Arkansas
+colgate	Colgate
+florida	Florida
+virginia-tech	Virginia Tech
+ohio-state	Ohio State
+oral-roberts	Oral Roberts
+illinois	Illinois
+drexel	Drexel
+loyola-il	Loyola-Chicago
+georgia-tech	Georgia Tech
+tennessee	Tennessee
+oregon-state	Oregon State
+oklahoma-state	Oklahoma State
+liberty	Liberty
+san-diego-state	San Diego State
+syracuse	Syracuse
+west-virginia	West Virginia
+morehead-state	Morehead State
+clemson	Clemson
+rutgers	Rutgers
+houston	Houston
+cleveland-state	Cleveland State

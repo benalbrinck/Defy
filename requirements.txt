@@ -1,7 +1,12 @@
-matplotlib==3.4.2
 imageio==2.9.0
 numpy==1.19.5
 sportsreference==0.5.2
+keras_nightly==2.5.0.dev2021032900
 tensorflow==2.5.0
-ipython==8.0.1
-PySimpleGUI==4.56.0
+tensorflow_addons==0.15.0
+matplotlib==3.5.1
+ipython==8.1.1
+keras==2.8.0
+PyQt6==6.2.3
+PyYAML==6.0
+scikit_learn==1.0.2
