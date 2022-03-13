@@ -14,6 +14,8 @@ if __name__ == '__main__':
 		config = yaml.safe_load(file)
 
 	use_max_prob = config['simulate']['use_max_prob']
+	lpf = config['simulate']['lpf_simulate']
+
 	checkpoint_path = config['simulate']['checkpoint_path']
 	results_folder_name = checkpoint_path.replace('networks/', '')
 	use_epoch = config['simulate']['use_epoch']
@@ -46,6 +48,11 @@ if __name__ == '__main__':
 			
 			if skip_round:
 				continue
+
+			# Low-pass filter
+			game = {k: game[k] if game[k] > lpf else 0 for k in game}
+			game_sum = sum(list(game.values()))
+			game = {k: game[k] / game_sum for k in game}
 
 			if use_max_prob:
 				win_team = max(game, key=game.get)
