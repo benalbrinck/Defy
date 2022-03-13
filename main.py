@@ -1,6 +1,7 @@
 import check
 import pickle
 import sys
+import os
 import yaml
 
 import matplotlib.pyplot as plt
@@ -206,7 +207,7 @@ class Space(QLabel):
 
 
 if __name__ == '__main__':
-    # Get config and lookup table
+    # Get config
     with open('setup/config.yml') as file:
         config = yaml.safe_load(file)
 
@@ -216,9 +217,6 @@ if __name__ == '__main__':
     results_file_name = config['visual']['results_path']
     use_epoch = config['simulate']['use_epoch']
 
-    with open(f'setup/display_teams/{check_year}.txt') as file:
-        display_names = {r.split('\t')[0]: r.split('\t')[1] for r in file.read().split('\n')}
-
     # Get results and teams
     results = check.get_predicted_results()
 
@@ -227,6 +225,14 @@ if __name__ == '__main__':
 
     with open(f'setup/tournament_teams/{check_year}.txt') as file:
         teams = file.read().split('\n')
+    
+    # Get lookup table
+    if os.path.exists(f'setup/display_teams/{check_year}.txt'):
+        with open(f'setup/display_teams/{check_year}.txt') as file:
+            display_names = {r.split('\t')[0]: r.split('\t')[1] for r in file.read().split('\n')}
+    else:
+        # If no display names, use internal names instead
+        display_names = {t: t for t in teams}
     
     # Get pickled probabilities
     with open(f'results/{results_folder_name}/{use_epoch:04d}_probs.txt', 'rb') as file:
