@@ -13,6 +13,8 @@ if __name__ == '__main__':
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
 
+	check_results = config['global']['check_results']
+
 	use_max_prob = config['simulate']['use_max_prob']
 	lpf = config['simulate']['lpf_simulate']
 
@@ -75,5 +77,8 @@ if __name__ == '__main__':
 	with open('setup/config.yml', 'w') as file:
 		yaml.dump(config, file, default_flow_style=False)
 
-	logger.info('Running check...')
-	check.check_results(logger)
+	if check_results:
+		logger.info('Running check...')
+		check.check_results(logger)
+	else:
+		logger.info('Finished. Did not check results.')

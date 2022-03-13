@@ -3,6 +3,7 @@ import pickle
 import sys
 import os
 import yaml
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
@@ -101,17 +102,18 @@ class Bracket(QWidget):
         main_layout.addLayout(bracket_layout)
 
         # Add points
-        point_layout = QHBoxLayout()
-        point_layout.addWidget(Space('---/---'))
-
-        for r in range(6):
-            point_layout.addWidget(Space(f'{round_points[r]}/{max_round_points[r]}'))
-        
-        for r in range(6):
+        if len(round_points) != 0:
+            point_layout = QHBoxLayout()
             point_layout.addWidget(Space('---/---'))
-        
-        main_layout.addLayout(point_layout)
-        
+
+            for r in range(6):
+                point_layout.addWidget(Space(f'{round_points[r]}/{max_round_points[r]}'))
+            
+            for r in range(6):
+                point_layout.addWidget(Space('---/---'))
+            
+            main_layout.addLayout(point_layout)
+            
         self.setLayout(main_layout)
         
 
@@ -212,16 +214,22 @@ if __name__ == '__main__':
         config = yaml.safe_load(file)
 
     check_year = config['global']['check_year']
+    check_results = config['global']['check_results']
+
     checkpoint_path = config['simulate']['checkpoint_path']
     results_folder_name = checkpoint_path.replace('networks/', '')
+
     results_file_name = config['visual']['results_path']
     use_epoch = config['simulate']['use_epoch']
 
     # Get results and teams
     results = check.get_predicted_results()
 
-    with open(f'setup/true_results/{check_year}.txt') as file:
-        true_results = [r.split('\n') for r in file.read().split('\n\n')]
+    if check_results:
+        with open(f'setup/true_results/{check_year}.txt') as file:
+            true_results = [r.split('\n') for r in file.read().split('\n\n')]
+    else:
+        true_results = deepcopy(results)
 
     with open(f'setup/tournament_teams/{check_year}.txt') as file:
         teams = file.read().split('\n')
@@ -246,7 +254,11 @@ if __name__ == '__main__':
     results_probs.insert(0, initial_probs)
 
     # Get round points
-    round_points, max_round_points = check.get_round_points()
+    if check_results:
+        round_points, max_round_points = check.get_round_points()
+    else:
+        round_points = []
+        max_round_points = []
 
     # Create main window
     app = QApplication.instance()

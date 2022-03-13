@@ -83,7 +83,7 @@ def simulate_combinations(first_teams, second_teams):
 	return results
 
 
-def simulate_round(teams, correct_teams):
+def simulate_round(teams, correct_teams=[]):
 	"""Simulate each game in the round."""
 	results = []
 	result_probs = []
@@ -98,7 +98,11 @@ def simulate_round(teams, correct_teams):
 
 		# Record results
 		results.append(result)
-		result_probs.append(result[correct_teams[game]])
+
+		if check_results:
+			result_probs.append(result[correct_teams[game]])
+		else:
+			result_probs.append(1)
 
 	return results, result_probs
 
@@ -116,6 +120,7 @@ if __name__ == '__main__':
 
 	year = config['global']['start_year']
 	check_year = config['global']['check_year']
+	check_results = config['global']['check_results']
 
 	use_removed_players = config['simulate']['use_removed_players']
 	lpf = config['simulate']['lpf_score']
@@ -127,14 +132,15 @@ if __name__ == '__main__':
 	with open(f'setup/conferences/{check_year}.txt') as file:
 		conference_names = file.read().split('\n')
 	
-	with open(f'setup/removed_players/{check_year}.txt') as file:
-		removed_players = file.read().split('\n')
-	
-	with open(f'setup/true_results/{check_year}.txt') as file:
-		true_results = [r.split('\n') for r in file.read().split('\n\n')]
-
-	if not use_removed_players:
+	if use_removed_players:
+		with open(f'setup/removed_players/{check_year}.txt') as file:
+			removed_players = file.read().split('\n')
+	else:
 		removed_players = []
+	
+	if check_results:
+		with open(f'setup/true_results/{check_year}.txt') as file:
+			true_results = [r.split('\n') for r in file.read().split('\n\n')]
 
 	# Get all conference teams and team data
 	# logger.info('Get conference teams...')
@@ -147,7 +153,7 @@ if __name__ == '__main__':
 
 	# Get teams for tournament
 	logger.info('Getting tournament teams and normalization value...')
-	with open('setup/tournament_teams.txt') as file:
+	with open(f'setup/tournament_teams/{check_year}.txt') as file:
 		split_text = file.read().split('\n')
 	
 	tournament_teams = []
@@ -177,7 +183,12 @@ if __name__ == '__main__':
 	# Simulate main tournament
 	for tournament_round in range(6):
 		logger.info(f'Round {tournament_round + 1}:')
-		round_results, round_prob = simulate_round(tournament_teams, true_results[tournament_round])
+
+		if check_results:
+			round_results, round_prob = simulate_round(tournament_teams, true_results[tournament_round])
+		else:
+			round_results, round_prob = simulate_round(tournament_teams)
+		
 		display_results(round_prob)
 
 		# Calculate running probabilities, variances, and expected score
