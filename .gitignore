@@ -133,6 +133,7 @@ cython_debug/
 /old
 /result_backup
 /tensorboards
+/setup
 tuning.tsv
 
 # Testing files
