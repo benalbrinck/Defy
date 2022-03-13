@@ -50,7 +50,7 @@ if __name__ == '__main__':
 			if use_max_prob:
 				win_team = max(game, key=game.get)
 			else:
-				win_team = random.choices(list(game.keys()), weights=list(game.values()), k=1)[0]
+				win_team = random.choices(list(game.keys()), weights=list(game.values()))[0]
 
 			results_list[index].append(win_team)
 

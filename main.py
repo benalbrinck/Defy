@@ -151,8 +151,9 @@ class Graph(QDialog):
         team_index = tick_names.index(team)
         bar_list[team_index].set_color('darkred')
 
-        true_team_index = tick_names.index(true_team)
-        bar_list[true_team_index].set_color('steelblue')
+        if true_team in tick_names:
+            true_team_index = tick_names.index(true_team)
+            bar_list[true_team_index].set_color('steelblue')
 
         plt.xticks(x, tick_names, fontsize=12, rotation=45)
 

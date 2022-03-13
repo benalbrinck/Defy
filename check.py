@@ -18,7 +18,7 @@ def get_predicted_results():
 	# Get all file names in folder and find which one matches starts_with
 	results_file_name = ''
 
-	for file_name in os.listdir(f'results/{results_folder_name}'):
+	for file_name in reversed(os.listdir(f'results/{results_folder_name}')):
 		if starts_with in file_name:
 			results_file_name = file_name + ''
 			break

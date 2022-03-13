@@ -75,7 +75,7 @@ if __name__ == '__main__':
             with open(f'data/conferences_{year}.json', 'w') as file:
                 json.dump(conference_teams, file)
 
-        if os.path.isfile(f'data/data_{year}.npz') and os.path.isfile(f'data/data_{year}_ncaa.npz'):
+        if os.path.isfile(f'data/data_{year}.npz'):
             logger.info('\tYear data exists, skipping...')
 
             # Check if this is the last year

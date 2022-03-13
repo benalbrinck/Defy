@@ -90,6 +90,13 @@ def simulate_round(teams, correct_teams):
 
 	for game in range(int(len(teams) / 2)):
 		result = simulate_combinations(teams[game * 2], teams[(game * 2) + 1])
+
+		# Low-pass filter
+		result = {k: result[k] if result[k] > lpf else 0 for k in result}
+		result_sum = sum(list(result.values()))
+		result = {k: result[k] / result_sum for k in result}
+
+		# Record results
 		results.append(result)
 		result_probs.append(result[correct_teams[game]])
 
@@ -118,6 +125,7 @@ if __name__ == '__main__':
 
 	year = config['global']['start_year']
 	use_removed_players = config['simulate']['use_removed_players']
+	lpf = config['simulate']['lpf_score']
 
 	checkpoint_path = config['simulate']['checkpoint_path']
 	use_epoch = config['simulate']['use_epoch']
@@ -162,6 +170,7 @@ if __name__ == '__main__':
 	# String to record results
 	results_probs = []
 	expected_score = 0
+	variance = 0
 
 	# Simulate main tournament
 	for tournament_round in range(6):
@@ -169,14 +178,22 @@ if __name__ == '__main__':
 		round_results, round_prob = simulate_round(tournament_teams, true_results[tournament_round])
 		display_results(round_prob)
 
-		# Calculate running probabilities and expected score
-		expected_score += sum([p * ((2 ** tournament_round) * 10) for p in round_prob])
+		# Calculate running probabilities, variances, and expected score
+		round_score = ((2 ** tournament_round) * 10)
+		round_means = [p * round_score for p in round_prob]
+
+		correct_variance = [(round_score - m)**2 * p for p, m in zip(round_prob, round_means)]
+		incorrect_variance = [m**2 * (1 - p) for p, m in zip(round_prob, round_means)]
+		
+		expected_score += sum(round_means)
+		variance += sum(correct_variance) + sum(incorrect_variance)
 		
 		# Record results and repeat
 		results_probs.append(round_results[:])
 		tournament_teams = round_results[:]
 
 	logger.info(f'Expected score: {expected_score}')
+	logger.info(f'Standard deviation: {variance ** (1/2)}')
 	results_file_name = checkpoint_path.replace('networks/', '')[:-5]
 
 	if not os.path.exists(f'results/{results_file_name[:-4]}'):
