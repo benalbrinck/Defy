@@ -29,7 +29,11 @@ def get_teams():
         remove_indices = [5, 20, 28, 31, 34]  # Indices that are strings
 
         for player in team.roster.players:
-            player_data = player.dataframe.loc[f'{year - 1}-{str(year)[2:]}'].to_numpy()
+            try:
+                player_data = player.dataframe.loc[f'{year - 1}-{str(year)[2:]}'].to_numpy()
+            except:
+                continue
+            
             player_fixed_data = np.expand_dims(np.delete(player_data, remove_indices), axis=0)
             roster[player.player_id] = player_fixed_data.tolist()
     
