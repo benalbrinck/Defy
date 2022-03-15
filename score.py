@@ -134,9 +134,9 @@ if __name__ == '__main__':
 	
 	if use_removed_players:
 		with open(f'setup/removed_players/{check_year}.txt') as file:
-			removed_players = file.read().split('\n')
+			removed_player_rounds = {p.split('\t')[0]: int(p.split('\t')[1]) for p in file.read().split('\n')}
 	else:
-		removed_players = []
+		removed_player_rounds = {}
 	
 	if check_results:
 		with open(f'setup/true_results/{check_year}.txt') as file:
@@ -183,6 +183,9 @@ if __name__ == '__main__':
 	# Simulate main tournament
 	for tournament_round in range(6):
 		logger.info(f'Round {tournament_round + 1}:')
+
+		# Get removed players and score round
+		removed_players = [p for p in removed_player_rounds if removed_player_rounds[p] < tournament_round]
 
 		if check_results:
 			round_results, round_prob = simulate_round(tournament_teams, true_results[tournament_round])
