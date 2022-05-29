@@ -1,3 +1,8 @@
+"""Generates probabilities for every game in the tournament and calculates the average
+score in the ESPN Tournament Challenge using the model created from train.py.
+"""
+
+
 import defy_logging
 import defy_model
 import json
@@ -9,8 +14,12 @@ import numpy as np
 from sportsreference.ncaab.conferences import Conference
 
 
-def get_conference_teams():
-    """Get all teams for each conference in the current year"""
+def get_conference_teams() -> list:
+    """Get all teams for each conference in the current year.
+	
+	Returns:
+		conference_teams (list): list of lists of teams for each conference
+	"""
     conference_teams = []
 
     for conference_name in conference_names:
@@ -20,8 +29,16 @@ def get_conference_teams():
     return conference_teams
 
 
-def simulate_game(team1, team2):
-	"""Simulate a game between the two teams."""
+def simulate_game(team1: str, team2: str) -> dict:
+	"""Simulate a game between the two teams.
+	
+	Parameters:
+		team1 (str): one of the teams playing
+		team2 (str): one of the teams playing
+
+	Returns:
+		game (dict): dictionary of both teams and the probability that either will win
+	"""
 	global model
 
 	# Get each team's stats
@@ -61,7 +78,18 @@ def simulate_game(team1, team2):
 	}
 
 
-def simulate_combinations(first_teams, second_teams):
+def simulate_combinations(first_teams: dict, second_teams: dict) -> dict:
+	"""Simulate every matchup between two teams and return probabilities.
+	
+	Parameters:
+		first_teams (dict): holds each first team in the matchup and the probability 
+			that the team will make it to the matchup
+		second_teams (dict): same as first_teams, but for the second team in the matchup
+	
+	Returns:
+		results (dict): probability that each team in first_teams and second_teams will
+			win the matchup
+	"""
 	first_team_keys = list(first_teams.keys())
 	second_team_keys = list(second_teams.keys())
 	results = {}
@@ -83,8 +111,21 @@ def simulate_combinations(first_teams, second_teams):
 	return results
 
 
-def simulate_round(teams, correct_teams=[]):
-	"""Simulate each game in the round."""
+def simulate_round(teams: list, correct_teams: list=[]) -> tuple[list, list]:
+	"""Simulate each game in the round.
+	
+	Parameters:
+		teams (list): list of dictionaries of teams in the round. Each dictionary has all
+			teams that can reach that round, and the probability that they will reach that 
+			round. Every two teams in the list will play each other.
+		correct_teams (list), default []: the correct results of the round. If set, 
+			result_probs will be set for each game to be the probability that the correct 
+			team will win. Otherwise, result_probs will be set to 1 for each game.
+	
+	Returns:
+		results (list): the list of dictionaries of teams after simulating the round.
+		result_probs (list): see correct_teams.
+	"""
 	results = []
 	result_probs = []
 
@@ -107,7 +148,12 @@ def simulate_round(teams, correct_teams=[]):
 	return results, result_probs
 
 
-def display_results(round_prob):
+def display_results(round_prob: list) -> None:
+	"""Use logger to display results of a round.
+	
+	Parameters:
+		round_prob (list): the list of probabilities for the round.
+	"""
 	for i, p in enumerate(round_prob):
 		logger.info(f'{i}, {round(p * 100, 2)}%')
 
@@ -143,7 +189,7 @@ if __name__ == '__main__':
 			true_results = [r.split('\n') for r in file.read().split('\n\n')]
 
 	# Get all conference teams and team data
-	# logger.info('Get conference teams...')
+	logger.info('Get conference teams...')
 	with open(f'data/conferences_{year}.json') as file:
 		conference_teams = json.load(file)
 
@@ -175,7 +221,7 @@ if __name__ == '__main__':
 	model = defy_model.get_model(simulate=True, temperature=temperature)
 	model.load_weights(checkpoint_path)
 
-	# String to record results
+	# Variables to record results
 	results_probs = []
 	expected_score = 0
 	variance = 0

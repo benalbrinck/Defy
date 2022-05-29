@@ -1,3 +1,6 @@
+"""Simulates games with the probabilities generated from score.py"""
+
+
 import check
 import defy_logging
 import os

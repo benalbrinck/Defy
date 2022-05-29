@@ -1,3 +1,6 @@
+"""Displays bracket and probabilities of predictions made from simulate.py."""
+
+
 import defy_logging
 import defy_model
 import os
@@ -8,7 +11,16 @@ import tensorflow as tf
 from datetime import datetime
 
 
-def get_npz(path):
+def get_npz(path: str) -> tuple[np.array, np.array]:
+	"""Get inputs and outputs and format npz file.
+	
+	Parameters:
+		path (str): path of the npz file
+	
+	Returns:
+		inputs (np.array): inputs gathered from npz file
+		outputs (np.array): outputs gathered from npz file
+	"""
 	npz_file = np.load(path, allow_pickle=True)
 
 	inputs = np.nan_to_num(npz_file['inputs'].astype('float32'))
@@ -17,7 +29,17 @@ def get_npz(path):
 	return inputs, outputs
 
 
-def get_data(end_year, year):
+def get_data(end_year: int, year: int) -> tuple[np.array, np.array]:
+	"""Get data from end_year to year.
+	
+	Parameters:
+		end_year (int): earlier year in range to gather data for (inclusive)
+		year (int): later yer in range to gather data for (inclusive)
+	
+	Returns:
+		input_array (np.array): inputs gathered from year range
+		output_array (np.array): outputs gathered from year range
+	"""
 	inputs = []
 	outputs = []
 
@@ -53,7 +75,15 @@ def get_data(end_year, year):
 	return input_array, output_array
 
 
-def flip_data(x):
+def flip_data(x: np.array) -> np.array:
+	"""Flip first and second half of row in array.
+	
+	Parameters:
+		x (np.array): array to flip
+	
+	Returns:
+		x (np.array): flipped array
+	"""
 	pivot = int(x.shape[1] / 2)
 	half_one = x[:, :pivot]
 	half_two = x[:, pivot:]
@@ -61,7 +91,13 @@ def flip_data(x):
 	return np.concatenate((half_two, half_one), axis=1)
 
 
-def calculate_temperature(epoch, logs={}):
+def calculate_temperature(epoch: int, logs: dict={}) -> None:
+	"""Get temperature value based off of the current model.
+	
+	Parameters:
+		epoch (int): the current epoch. Is used for logging
+		logs (dict): logs from Tensorflow
+	"""
 	global predicted_outputs
 	global temperature
 
@@ -74,6 +110,7 @@ def calculate_temperature(epoch, logs={}):
 	for i in range(300):
 		opts = optimizer.minimize(temperature_loss, var_list=[temperature])
 	
+	# Log and write temperature to file
 	epoch_message = ' - '.join('{}: {:0.4f}'.format(k, logs[k]) for k in logs)
 	logger.info(f'Epoch {epoch + 1}: {epoch_message}')
 	logger.info(f'Temperature Value: {temperature.numpy()}')
@@ -84,7 +121,12 @@ def calculate_temperature(epoch, logs={}):
 		file.write(str(temperature.numpy()))
 
 
-def temperature_loss():
+def temperature_loss() -> float:
+	"""Get model loss for calculating temperature.
+	
+	Returns:
+		loss (float): loss calculated from model and temperature
+	"""
 	temperature_model = tf.math.divide(predicted_outputs, temperature)
 	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(validation_outputs, temperature_model))
 

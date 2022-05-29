@@ -1,7 +1,22 @@
+"""The neural network model used for train.py and score.py."""
+
+
 import tensorflow as tf
 import tensorflow_addons as tfa
 
-def get_model(simulate=False, temperature=1):
+
+def get_model(simulate: bool=False, temperature: float=1) -> tf.keras.Model:
+	"""Gets the network model.
+	
+	Parameters:
+		simulate (bool), default false: if set to false, the model will not have a softmax 
+			layer at the end. If set to true, the temperature value will be applied and 
+			a softmax layer will be added.
+		temperature (float), default 1: the temperature value to apply if simulate is True.
+
+	Returns:
+		model (tf.keras.Model): the compiled model.
+	"""
 	model = tf.keras.models.Sequential([
 		tf.keras.layers.Dense(16, input_shape=(1168,)),
 		tf.keras.layers.GaussianNoise(0.1),

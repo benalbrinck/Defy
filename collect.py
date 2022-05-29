@@ -1,3 +1,6 @@
+"""Collects data on past NCAA Tournament and regular season games."""
+
+
 import defy_logging
 import json
 import os
@@ -9,8 +12,17 @@ from sportsreference.ncaab.schedule import Schedule
 from time import sleep
 
 
-def get_conference_teams():
-    """Get all teams for each conference in the current year"""
+def get_conference_teams(conference_names: list, year: int) -> list:
+    """Get all teams for each conference in the current year.
+    
+    Parameters:
+        conference_names (list): the names of each conference to get teams for.
+        year (int): the year to get teams for.
+
+    Returns:
+        conference_teams (list): a list of a list of teams. Each position in the outer 
+            list corresponds with the same position in conference_names.
+    """
     conference_teams = []
 
     for conference_name in conference_names:
@@ -20,7 +32,17 @@ def get_conference_teams():
     return conference_teams
 
 
-def get_teams():
+def get_teams(year: int) -> dict:
+    """Gets all teams and their player data for the specified year.
+
+    Parameters:
+        year (int): the year to get teams for.
+    
+    Returns:
+        teams (dict): a dictionary of teams and their players, with the keys being the teams 
+            and the values being a dictionary of players. This dictionary has the player name 
+            as the key and the value as their data converted from a numpy array to a list.
+    """
     teams = {}
 
     for team in Teams(str(year)):
@@ -74,7 +96,7 @@ if __name__ == '__main__':
                 conference_teams = json.load(file)
         else:
             logger.info('\tConference file does not exist, gathering data from API...')
-            conference_teams = get_conference_teams()
+            conference_teams = get_conference_teams(conference_names, year)
 
             # Save data for future use
             with open(f'data/conferences_{year}.json', 'w') as file:
@@ -96,7 +118,7 @@ if __name__ == '__main__':
                 teams = json.load(file)
         else:
             logger.info('\tTeams data file does not exist, gathering data from API...')
-            teams = get_teams()
+            teams = get_teams(year)
 
             # Save data
             with open(f'data/teams_{year}.json', 'w') as file:

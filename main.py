@@ -1,3 +1,6 @@
+"""Displays the bracket, the predicted results, and the probabilities for choosing the correct team."""
+
+
 import check
 import pickle
 import sys
@@ -20,7 +23,19 @@ from PyQt6.QtWidgets import QHBoxLayout
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, results, true_results, results_probs, round_points, max_round_points) -> None:
+    """Main display window. This displays the bracket and the graph of probabilities."""
+    def __init__(self, results: list, true_results: list, results_probs: list, round_points: list, 
+        max_round_points: list) -> None:
+        """Main display window. This displays the bracket and the graph of probabilities.
+
+        Parameters:
+            results (list): the list of lists of the predicted results for each round.
+            true_results (list): the list of lists of the true results for each round.
+            results_probs (list): the list of dictionaries of teams and their probabilities 
+                for each round.
+            round_points (list): the list of points for each round displayed underneath the bracket.
+            max_round_points (list): the list of maximum points for each round.
+        """
         super().__init__()
 
         self.setWindowTitle('Defy')
@@ -41,7 +56,21 @@ class MainWindow(QMainWindow):
 
 
 class Bracket(QWidget):
-    def __init__(self, results, true_results, results_probs, round_points, max_round_points, set_data):
+    """Main bracket used in the main window."""
+    def __init__(self, results: list, true_results: list, results_probs: list, round_points: list, 
+        max_round_points: list, set_data: function) -> None:
+        """Main bracket used in the main window. This uses Space and Team to display the bracket.
+
+        Parameters:
+            results (list): the list of lists of the predicted results for each round.
+            true_results (list): the list of lists of the true results for each round.
+            results_probs (list): the list of dictionaries of teams and their probabilities 
+                for each round.
+            round_points (list): the list of points for each round displayed underneath the bracket.
+            max_round_points (list): the list of maximum points for each round.
+            set_data (function): the set function for the graph in the main window. This will be 
+                called when the Team buttons are pressed.
+        """
         super().__init__()
         main_layout = QVBoxLayout()
 
@@ -118,14 +147,26 @@ class Bracket(QWidget):
         
 
 class Graph(QDialog):
-    def __init__(self):
+    """The graph used to display team probabilities in the main window."""
+    def __init__(self) -> None:
+        """The graph used to display team probabilities in the main window."""
         super().__init__()
 
         self.layout = QVBoxLayout()
         self.canvas = None
         self.setLayout(self.layout)
     
-    def set_data(self, results_probs, team, true_team):
+    def set_data(self, results_probs: dict, team: str, true_team: str) -> None:
+        """The function called from Team to set the team probabilities and display the graph.
+        Only the top 10 teams will be displayed.
+        
+        Parameters:
+            results_probs (dict): the dictionary of teams and their probabilities.
+            team (str): the team to display. The display name will be used if found. 
+                This team will be colored red (overriden by true_team's color).
+            true_team (str): the correct team. The display name will be used if found. 
+                This team will be colored blue.
+        """
         if self.canvas is not None:
             self.layout.removeWidget(self.canvas)
             plt.close()
@@ -165,7 +206,19 @@ class Graph(QDialog):
 
 
 class Team(QPushButton):
-    def __init__(self, team, true_team, results_probs, set_data) -> None:
+    """Display for teams that can be pushed to show probability graph."""
+    def __init__(self, team: str, true_team: str, results_probs: dict, set_data: function) -> None:
+        """Display for teams that can be pushed to show probability graph.
+        
+        Parameters:
+            team (str): the team to display. The display name will be used if found.
+            true_team (str): the correct team. If team and true_team are the same, the button 
+                will be blue, otherwise red. These will be equal if not checking against
+                true_results.
+            results_probs (dict): the dictionary of teams and their probabilities.
+            set_data (function): the set function for the graph in the main window. This will be 
+                called when this button is pressed.
+        """
         # Check if result is correct
         correct_result = team == true_team
 
@@ -200,7 +253,13 @@ class Team(QPushButton):
 
 
 class Space(QLabel):
-    def __init__(self, text) -> None:
+    """Empty space used for bracket and to display points."""
+    def __init__(self, text: str) -> None:
+        """Empty space used for bracket and to display points.
+        
+        Parameters:
+            text (str): the text to display.
+        """
         super().__init__(text)
 
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)

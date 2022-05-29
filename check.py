@@ -1,9 +1,20 @@
+"""Checks predicted results from the model against the true results."""
+
+
 import defy_logging
+import logging
 import os
 import yaml
 
 
-def get_predicted_results():
+def get_predicted_results() -> list:
+	"""Gets predicted results. This will find the most recent results based on the
+	checkpoint path.
+
+	Returns:
+		predicted_results (list): a list of a list of the predicted results. The outer list 
+			corresponds to each round, and the inner list has each team for that round.
+	"""
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
 
@@ -34,7 +45,15 @@ def get_predicted_results():
 	return predicted_results
 
 
-def check_results(logger):
+def check_results(logger: logging.Logger) -> None:
+	"""Checks predicted results against true results and displays using the logger 
+	each round, its predicted and true results, and how many points would have been earned 
+	and how many games were predicted correctly. The predicted results are retrieved using 
+	get_predicted_results.
+	
+	Parameters:
+		logger (logging.Logger): the logger to display results.
+	"""
 	# Get config
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
@@ -70,6 +89,14 @@ def check_results(logger):
 
 
 def get_round_points():
+	"""Gets how many points the predicted results would have received. The results are 
+	retrieved from get_predicted_results.
+	
+	Returns:
+		round_points (list): the points earned for each round, where each index is the points 
+			for that round.
+		max_round_points (list): the maximum amount of points for each round.
+	"""
 	# Get config
 	with open('setup/config.yml') as file:
 		config = yaml.safe_load(file)
@@ -98,6 +125,7 @@ def get_round_points():
 			max_round_points[-1] += (2 ** r) * 10
 	
 	return round_points, max_round_points
+
 
 if __name__ == '__main__':
 	logger = defy_logging.get_logger()
