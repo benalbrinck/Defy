@@ -133,7 +133,7 @@ def simulate_round(teams: list, correct_teams: list=[]) -> tuple[list, list]:
 		result = simulate_combinations(teams[game * 2], teams[(game * 2) + 1])
 
 		# Low-pass filter
-		result = {k: result[k] if result[k] > lpf else 0 for k in result}
+		result = {k: result[k] if result[k] > hpf else 0 for k in result}
 		result_sum = sum(list(result.values()))
 		result = {k: result[k] / result_sum for k in result}
 
@@ -169,7 +169,7 @@ if __name__ == '__main__':
 	check_results = config['global']['check_results']
 
 	use_removed_players = config['simulate']['use_removed_players']
-	lpf = config['simulate']['lpf_score']
+	hpf = config['simulate']['hpf_score']
 
 	checkpoint_path = config['simulate']['checkpoint_path']
 	use_epoch = config['simulate']['use_epoch']

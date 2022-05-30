@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
 class Bracket(QWidget):
     """Main bracket used in the main window."""
     def __init__(self, results: list, true_results: list, results_probs: list, round_points: list, 
-        max_round_points: list, set_data: function) -> None:
+        max_round_points: list, set_data) -> None:
         """Main bracket used in the main window. This uses Space and Team to display the bracket.
 
         Parameters:
@@ -207,7 +207,7 @@ class Graph(QDialog):
 
 class Team(QPushButton):
     """Display for teams that can be pushed to show probability graph."""
-    def __init__(self, team: str, true_team: str, results_probs: dict, set_data: function) -> None:
+    def __init__(self, team: str, true_team: str, results_probs: dict, set_data) -> None:
         """Display for teams that can be pushed to show probability graph.
         
         Parameters:

@@ -19,7 +19,7 @@ if __name__ == '__main__':
 	check_results = config['global']['check_results']
 
 	use_max_prob = config['simulate']['use_max_prob']
-	lpf = config['simulate']['lpf_simulate']
+	hpf = config['simulate']['hpf_simulate']
 
 	checkpoint_path = config['simulate']['checkpoint_path']
 	results_folder_name = checkpoint_path.replace('networks/', '')
@@ -55,7 +55,7 @@ if __name__ == '__main__':
 				continue
 
 			# Low-pass filter
-			game = {k: game[k] if game[k] > lpf else 0 for k in game}
+			game = {k: game[k] if game[k] > hpf else 0 for k in game}
 			game_sum = sum(list(game.values()))
 			game = {k: game[k] / game_sum for k in game}
 
